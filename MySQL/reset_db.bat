@@ -1,0 +1,1 @@
+mysql --defaults-extra-file=./credentials.txt < ./reset_db.sql
