@@ -10,6 +10,7 @@ namespace fidelizPlus_back.Models
             Trader = new HashSet<Trader>();
         }
 
+        public override IEnumerable<string> Fields => new string[] { "Id", "Surname", "FirstName", "Email", "Password" };
         public string Surname { get; set; }
         public string FirstName { get; set; }
         public string Email { get; set; }

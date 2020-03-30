@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace fidelizPlus_back.Models
 {
@@ -16,5 +17,7 @@ namespace fidelizPlus_back.Models
         public DbSet<T> Set<T>() where T : class;
 
         public int SaveChanges();
+
+        public EntityEntry Entry(object entity);
     }
 }

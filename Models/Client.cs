@@ -2,7 +2,7 @@
 
 namespace fidelizPlus_back.Models
 {
-    public partial class Client : Entity
+    public partial class Client : Entity, UserEntity
     {
         public Client()
         {
@@ -11,6 +11,7 @@ namespace fidelizPlus_back.Models
             CommercialLink = new HashSet<CommercialLink>();
         }
 
+        public override IEnumerable<string> Fields => new string[] { "Id", "UserId", "ConnectionId", "AdminPassword" };
         public int UserId { get; set; }
         public string ConnectionId { get; set; }
         public string AdminPassword { get; set; }

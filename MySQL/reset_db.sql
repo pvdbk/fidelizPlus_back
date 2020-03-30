@@ -82,7 +82,7 @@ CREATE TABLE `app`.`commercial_link` (
 CREATE TABLE `app`.`comment` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `commercial_link_id` INT NOT NULL,
-  `moment` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `creation_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `text` VARCHAR(500) NULL DEFAULT NULL,
   `rating` INT NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -96,8 +96,8 @@ CREATE TABLE `app`.`comment` (
 CREATE TABLE `app`.`offer` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `trader_id` INT NULL,
-  `start_date` DATETIME NOT NULL,
-  `end_date` DATETIME NOT NULL,
+  `start_time` DATETIME NOT NULL,
+  `end_time` DATETIME NOT NULL,
   `content_path` VARCHAR(200) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_offer_trader1_idx` (`trader_id` ASC) VISIBLE,
@@ -130,7 +130,7 @@ CREATE TABLE `app`.`client_offer` (
 CREATE TABLE `app`.`purchase` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `commercial_link_id` INT NOT NULL,
-  `date` DATETIME NOT NULL,
+  `paying_time` DATETIME NOT NULL,
   `amount` DECIMAL(10,2) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_purchase_commercial_link1_idx` (`commercial_link_id` ASC) VISIBLE,

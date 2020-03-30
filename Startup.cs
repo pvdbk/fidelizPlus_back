@@ -6,7 +6,10 @@ using Microsoft.Extensions.Hosting;
 
 namespace fidelizPlus_back
 {
+    using DTO;
     using Models;
+    using Repositories;
+    using Services;
 
     public class Startup
     {
@@ -21,6 +24,15 @@ namespace fidelizPlus_back
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(typeof(Context), typeof(AppContext));
+            services.AddSingleton(typeof(Repository<User>), typeof(StandardRepository<User>));
+            services.AddSingleton(typeof(UserEntityRepository<Client>), typeof(UserEntityStandardRepository<Client>));
+            services.AddSingleton(typeof(UserEntityRepository<Trader>), typeof(UserEntityStandardRepository<Trader>));
+            services.AddSingleton(typeof(AccountRepository), typeof(AccountStandardRepository));
+            services.AddSingleton(typeof(ClientOfferRepository), typeof(ClientOfferStandardRepository));
+            services.AddSingleton(typeof(CommercialLinkRepository), typeof(CommercialLinkStandardRepository));
+            services.AddSingleton(typeof(OfferRepository), typeof(OfferStandardRepository));
+            services.AddSingleton(typeof(Service<ClientDTO>), typeof(ClientsStandardService));
+            services.AddSingleton(typeof(Service<TraderDTO>), typeof(TradersStandardService));
             services.AddControllers();
         }
 

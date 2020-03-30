@@ -2,7 +2,7 @@
 
 namespace fidelizPlus_back.Models
 {
-    public partial class Trader : Entity
+    public partial class Trader : Entity, UserEntity
     {
         public Trader()
         {
@@ -10,6 +10,7 @@ namespace fidelizPlus_back.Models
             Offer = new HashSet<Offer>();
         }
 
+        public override IEnumerable<string> Fields => new string[] { "Id", "UserId", "ConnectionId", "Label", "Address", "Phone", "LogoPath" };
         public int UserId { get; set; }
         public string ConnectionId { get; set; }
         public string Label { get; set; }

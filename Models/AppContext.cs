@@ -133,8 +133,8 @@ namespace fidelizPlus_back.Models
 
                 entity.Property(e => e.CommercialLinkId).HasColumnName("commercial_link_id");
 
-                entity.Property(e => e.Moment)
-                    .HasColumnName("moment")
+                entity.Property(e => e.CreationTime)
+                    .HasColumnName("creation_time")
                     .HasColumnType("datetime")
                     .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
@@ -198,12 +198,12 @@ namespace fidelizPlus_back.Models
                     .HasCharSet("utf8mb4")
                     .HasCollation("utf8mb4_0900_ai_ci");
 
-                entity.Property(e => e.EndDate)
-                    .HasColumnName("end_date")
+                entity.Property(e => e.EndTime)
+                    .HasColumnName("end_time")
                     .HasColumnType("datetime");
 
-                entity.Property(e => e.StartDate)
-                    .HasColumnName("start_date")
+                entity.Property(e => e.StartTime)
+                    .HasColumnName("start_time")
                     .HasColumnType("datetime");
 
                 entity.Property(e => e.TraderId).HasColumnName("trader_id");
@@ -229,8 +229,8 @@ namespace fidelizPlus_back.Models
 
                 entity.Property(e => e.CommercialLinkId).HasColumnName("commercial_link_id");
 
-                entity.Property(e => e.Date)
-                    .HasColumnName("date")
+                entity.Property(e => e.PayingTime)
+                    .HasColumnName("paying_time")
                     .HasColumnType("datetime");
 
                 entity.HasOne(d => d.CommercialLink)
