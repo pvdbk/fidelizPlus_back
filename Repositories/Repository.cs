@@ -2,7 +2,9 @@
 
 namespace fidelizPlus_back.Repositories
 {
-    public interface Repository<T>
+    using Models;
+
+    public interface Repository<T> where T : Entity
     {
         public IEnumerable<T> Filter(Dictionary<string, object> schema);
 
