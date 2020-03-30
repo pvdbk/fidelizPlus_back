@@ -4,6 +4,8 @@ namespace fidelizPlus_back.Repositories
 {
     public interface Repository<T>
     {
+        public IEnumerable<T> Filter(Dictionary<string, object> schema);
+
         public IEnumerable<T> FindAll();
 
         public T FindById(int id);
