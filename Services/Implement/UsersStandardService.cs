@@ -25,7 +25,7 @@ namespace fidelizPlus_back.Services
             this.commercialLinkRepo = commercialLinkRepo;
         }
 
-        public abstract bool IsRequiredProp(PropertyInfo prop);
+        public abstract bool IsRequiredProp(string prop);
 
         public abstract TDTO ToDTO(TEntity entity);
 
@@ -75,27 +75,9 @@ namespace fidelizPlus_back.Services
             return this.entityRepo.Filter(new Tree(filter)).Select(this.ToDTO);
         }
 
-        public void CheckDTO(TDTO dto)
-        {
-            if (dto.Id != null)
-            {
-                throw new AppException("Unexpected id field in the body", 400);
-            }
-            string missing = Utils.Join(
-                Utils.GetProps<TDTO>()
-                    .Where(prop => IsRequiredProp(prop) && prop.GetValue(dto) == null)
-                    .Select(prop => "   - " + prop.Name),
-                "\n"
-            );
-            if (missing != "")
-            {
-                throw new AppException($"Missing :\n{missing}", 400);
-            }
-        }
-
         public TDTO Save(TDTO dto)
         {
-            this.CheckDTO(dto);
+            Utils.CheckDTO(dto, this.IsRequiredProp);
             if (this.entityRepo.FindAll().Any(entity => entity.ConnectionId == dto.ConnectionId))
             {
                 throw new AppException($"'{dto.ConnectionId}' is already used as connectionId", 400);
@@ -110,7 +92,7 @@ namespace fidelizPlus_back.Services
         public TDTO Update(int id, TDTO dto)
         {
             TEntity entity = this.Find(id);
-            this.CheckDTO(dto);
+            Utils.CheckDTO(dto, this.IsRequiredProp);
             if (this.entityRepo.FindAll().Any(entity => entity.ConnectionId == dto.ConnectionId && entity.Id != id))
             {
                 throw new AppException($"'{dto.ConnectionId}' is already used as connectionId", 400);

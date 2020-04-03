@@ -88,5 +88,23 @@ namespace fidelizPlus_back
                 }));
             return list.Where(filter);
         }
+
+        public static void CheckDTO<T>(T dto, Func<string, bool> IsRequiredProp) where T : DTO.DTO, new()
+        {
+            if (dto.Id != null)
+            {
+                throw new AppException("Unexpected id field in the body", 400);
+            }
+            string missing = Join(
+                GetProps<T>()
+                    .Where(prop => IsRequiredProp(prop.Name) && prop.GetValue(dto) == null)
+                    .Select(prop => "   - " + prop.Name),
+                "\n"
+            );
+            if (missing != "")
+            {
+                throw new AppException($"Missing :\n{missing}", 400);
+            }
+        }
     }
 }

@@ -16,6 +16,6 @@ namespace fidelizPlus_back.Services
 
         public T Update(int id, T dto);
 
-        public IEnumerable<T> Filter(string body);
+        public IEnumerable<T> Filter(string filter);
     }
 }

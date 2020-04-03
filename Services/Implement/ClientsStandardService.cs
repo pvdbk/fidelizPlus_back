@@ -23,9 +23,9 @@ namespace fidelizPlus_back.Services
             this.clientOfferRepo = clientOfferRepo;
         }
 
-        public override bool IsRequiredProp(PropertyInfo prop)
+        public override bool IsRequiredProp(string prop)
         {
-            return prop.Name != "Id" && prop.Name != "AdminPassword";
+            return prop != "Id" && prop != "AdminPassword";
         }
 
         public override ClientDTO ToDTO(Client client)

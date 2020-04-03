@@ -20,9 +20,9 @@ namespace fidelizPlus_back.Services
             this.offerRepo = offerRepo;
         }
 
-        public override bool IsRequiredProp(PropertyInfo prop)
+        public override bool IsRequiredProp(string prop)
         {
-            return prop.Name != "Id" && prop.Name != "Phone" && prop.Name != "LogoPath";
+            return prop != "Id" && prop != "Phone" && prop != "LogoPath";
         }
 
         public override TraderDTO ToDTO(Trader trader)
