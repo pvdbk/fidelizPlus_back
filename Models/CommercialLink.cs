@@ -13,7 +13,7 @@ namespace fidelizPlus_back.Models
         public override IEnumerable<string> Fields => new string[] { "Id", "TraderId", "ClientId", "Type" };
         public int? TraderId { get; set; }
         public int? ClientId { get; set; }
-        public int? Type { get; set; }
+        public int Type { get; set; }
 
         public virtual Client Client { get; set; }
         public virtual Trader Trader { get; set; }

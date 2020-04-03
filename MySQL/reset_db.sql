@@ -7,7 +7,7 @@ SET @@SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_D
 
 DROP SCHEMA IF EXISTS `app`;
 CREATE SCHEMA `app` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-USE `app` ;
+USE `app`;
 
 CREATE TABLE `app`.`user` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -64,7 +64,7 @@ CREATE TABLE `app`.`commercial_link` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `trader_id` INT NULL,
   `client_id` INT NULL,
-  `type` INT NULL DEFAULT NULL,
+  `type` INT NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_commercial_link_trader1_idx` (`trader_id` ASC) VISIBLE,
   INDEX `fk_commercial_link_client1_idx` (`client_id` ASC) VISIBLE,
