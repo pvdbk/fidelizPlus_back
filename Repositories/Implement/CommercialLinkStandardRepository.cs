@@ -5,7 +5,7 @@ namespace fidelizPlus_back.Repositories
 {
     using Models;
 
-    public class CommercialLinkStandardRepository : StandardRepository<CommercialLink>, CommercialLinkRepository
+    public class CommercialLinkStandardRepository : CrudStandardRepository<CommercialLink>, CommercialLinkRepository
     {
         public CommercialLinkStandardRepository(Context ctxt) : base(ctxt)
         {

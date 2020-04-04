@@ -2,7 +2,7 @@
 {
     using Models;
 
-    public interface AccountRepository : Repository<Account>
+    public interface ClientAccountRepository : CrudRepository<ClientAccount>
     {
         public int DeleteClient(int clientId);
     }

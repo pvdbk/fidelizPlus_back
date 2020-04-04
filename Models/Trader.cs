@@ -6,11 +6,11 @@ namespace fidelizPlus_back.Models
     {
         public Trader()
         {
+            TraderAccount = new HashSet<TraderAccount>();
             CommercialLink = new HashSet<CommercialLink>();
             Offer = new HashSet<Offer>();
         }
 
-        public override IEnumerable<string> Fields => new string[] { "Id", "UserId", "ConnectionId", "Label", "Address", "Phone", "LogoPath" };
         public int UserId { get; set; }
         public string ConnectionId { get; set; }
         public string Label { get; set; }
@@ -19,6 +19,7 @@ namespace fidelizPlus_back.Models
         public string LogoPath { get; set; }
 
         public virtual User User { get; set; }
+        public virtual ICollection<TraderAccount> TraderAccount { get; set; }
         public virtual ICollection<CommercialLink> CommercialLink { get; set; }
         public virtual ICollection<Offer> Offer { get; set; }
     }

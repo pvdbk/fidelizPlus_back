@@ -13,14 +13,15 @@ namespace fidelizPlus_back.Models
         {
         }
 
-        public virtual DbSet<Account> Account { get; set; }
         public virtual DbSet<Client> Client { get; set; }
+        public virtual DbSet<ClientAccount> ClientAccount { get; set; }
         public virtual DbSet<ClientOffer> ClientOffer { get; set; }
         public virtual DbSet<Comment> Comment { get; set; }
         public virtual DbSet<CommercialLink> CommercialLink { get; set; }
         public virtual DbSet<Offer> Offer { get; set; }
         public virtual DbSet<Purchase> Purchase { get; set; }
         public virtual DbSet<Trader> Trader { get; set; }
+        public virtual DbSet<TraderAccount> TraderAccount { get; set; }
         public virtual DbSet<User> User { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -33,28 +34,6 @@ namespace fidelizPlus_back.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Account>(entity =>
-            {
-                entity.ToTable("account");
-
-                entity.HasIndex(e => e.ClientId)
-                    .HasName("fk_account_client1_idx");
-
-                entity.Property(e => e.Id).HasColumnName("id");
-
-                entity.Property(e => e.Balance)
-                    .HasColumnName("balance")
-                    .HasColumnType("decimal(10,2)");
-
-                entity.Property(e => e.ClientId).HasColumnName("client_id");
-
-                entity.HasOne(d => d.Client)
-                    .WithMany(p => p.Account)
-                    .HasForeignKey(d => d.ClientId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_account_client1");
-            });
-
             modelBuilder.Entity<Client>(entity =>
             {
                 entity.ToTable("client");
@@ -88,6 +67,35 @@ namespace fidelizPlus_back.Models
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_client_user1");
+            });
+
+            modelBuilder.Entity<ClientAccount>(entity =>
+            {
+                entity.ToTable("client_account");
+
+                entity.HasIndex(e => e.ClientId)
+                    .HasName("fk_client_account_client1_idx");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.Balance)
+                    .HasColumnName("balance")
+                    .HasColumnType("decimal(10,2)");
+
+                entity.Property(e => e.ExternalAccount)
+                    .IsRequired()
+                    .HasColumnName("external_account")
+                    .HasColumnType("varchar(500)")
+                    .HasCharSet("utf8mb4")
+                    .HasCollation("utf8mb4_0900_ai_ci");
+
+                entity.Property(e => e.ClientId).HasColumnName("client_id");
+
+                entity.HasOne(d => d.Client)
+                    .WithMany(p => p.ClientAccount)
+                    .HasForeignKey(d => d.ClientId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_client_account_client1");
             });
 
             modelBuilder.Entity<ClientOffer>(entity =>
@@ -254,7 +262,6 @@ namespace fidelizPlus_back.Models
                 entity.Property(e => e.Id).HasColumnName("id");
 
                 entity.Property(e => e.Address)
-                    .IsRequired()
                     .HasColumnName("address")
                     .HasColumnType("varchar(500)")
                     .HasCharSet("utf8mb4")
@@ -293,6 +300,31 @@ namespace fidelizPlus_back.Models
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_trader_user1");
+            });
+
+            modelBuilder.Entity<TraderAccount>(entity =>
+            {
+                entity.ToTable("trader_account");
+
+                entity.HasIndex(e => e.TraderId)
+                    .HasName("fk_trader_account_client1_idx");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.ExternalAccount)
+                    .IsRequired()
+                    .HasColumnName("external_account")
+                    .HasColumnType("varchar(500)")
+                    .HasCharSet("utf8mb4")
+                    .HasCollation("utf8mb4_0900_ai_ci");
+
+                entity.Property(e => e.TraderId).HasColumnName("trader_id");
+
+                entity.HasOne(d => d.Trader)
+                    .WithMany(p => p.TraderAccount)
+                    .HasForeignKey(d => d.TraderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_trader_account_client1");
             });
 
             modelBuilder.Entity<User>(entity =>

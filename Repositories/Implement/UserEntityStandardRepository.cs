@@ -6,7 +6,7 @@ namespace fidelizPlus_back.Repositories
 {
     using Models;
 
-    public class UserEntityStandardRepository<T> : StandardRepository<T>, UserEntityRepository<T> where T : Entity, UserEntity, new()
+    public class UserEntityStandardRepository<T> : CrudStandardRepository<T>, UserEntityRepository<T> where T : Entity, UserEntity
     {
         public UserEntityStandardRepository(Context ctxt) : base(ctxt)
         {
@@ -25,7 +25,7 @@ namespace fidelizPlus_back.Repositories
         public override IEnumerable<T> Filter(Tree filtersTree)
         {
             IEnumerable<T> clients = base.Filter(filtersTree);
-            return Utils.ApplyFilter<T, User>(clients, filtersTree, entity => entity.User, new string[] { "Id" });
+            return FiltersHandler.Apply<T, User>(clients, filtersTree, entity => entity.User, new string[] { "Id" });
         }
     }
 }

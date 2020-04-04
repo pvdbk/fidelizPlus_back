@@ -5,9 +5,9 @@ namespace fidelizPlus_back.Repositories
 {
     using Models;
 
-    public class AccountStandardRepository : StandardRepository<Account>, AccountRepository
+    public class ClientAccountStandardRepository : CrudStandardRepository<ClientAccount>, ClientAccountRepository
     {
-        public AccountStandardRepository(Context ctxt) : base(ctxt)
+        public ClientAccountStandardRepository(Context ctxt) : base(ctxt)
         {
         }
 

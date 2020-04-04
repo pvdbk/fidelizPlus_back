@@ -6,9 +6,11 @@ namespace fidelizPlus_back
     public class AppException : Exception
     {
         public int Status { get; }
+        public object Content { get; }
 
-        public AppException(string message, int status = 500) : base(message)
+        public AppException(object content, int status = 500) : base()
         {
+            this.Content = content is string ? Utils.Quote((string)content) : content;
             this.Status = status;
         }
 
@@ -17,22 +19,22 @@ namespace fidelizPlus_back
             IActionResult ret;
             if (this.Status == 500)
             {
-                Console.WriteLine(this.Message);    // To replace by something better
+                Console.WriteLine(this.Content.ToString());    // To replace by something better
                 ret = controller.StatusCode(500, Utils.Quote("Server error"));
             }
             else
             {
                 ret =
-                    (this.Status == 400) ? controller.BadRequest(Utils.Quote(this.Message)) :
-                    (this.Status == 404) ? controller.NotFound(Utils.Quote(this.Message)) :
-                    controller.StatusCode(this.Status, Utils.Quote(this.Message));
+                    (this.Status == 400) ? controller.BadRequest(this.Content) :
+                    (this.Status == 404) ? controller.NotFound(this.Content) :
+                    controller.StatusCode(this.Status, this.Content);
             }
             return ret;
         }
 
-        public static T Cast<T>(string message, int status = 500)
+        public static T Cast<T>(object content, int status = 500)
         {
-            throw new AppException(message, status);
+            throw new AppException(content, status);
         }
     }
 }

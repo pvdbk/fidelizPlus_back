@@ -9,13 +9,22 @@ namespace fidelizPlus_back.Repositories
 {
     using Models;
 
-    public class StandardRepository<T> : Repository<T> where T : Entity, new()
+    public class CrudStandardRepository<T> : CrudRepository<T> where T : Entity
     {
         public Func<int> SaveChanges { get; }
         public DbSet<T> Entities { get; }
         public Func<object, EntityEntry> Entry { get; }
 
-        public StandardRepository(Context context)
+        private readonly IEnumerable<Type> writableTypes = new Type[] {
+            typeof(bool),
+            typeof(int),
+            typeof(int?),
+            typeof(decimal),
+            typeof(decimal?),
+            typeof(string)
+        };
+
+        public CrudStandardRepository(Context context)
         {
             this.SaveChanges = context.SaveChanges;
             this.Entities = context.Set<T>();
@@ -34,7 +43,7 @@ namespace fidelizPlus_back.Repositories
 
         public virtual IEnumerable<T> Filter(Tree filtersTree)
         {
-            return Utils.ApplyFilter<T, T>(this.FindAll(), filtersTree);
+            return FiltersHandler.Apply<T>(this.FindAll(), filtersTree);
         }
 
         public virtual void Save(T entity)
@@ -58,9 +67,13 @@ namespace fidelizPlus_back.Repositories
         public T Update(T newEntity)
         {
             T toUpdate = this.FindById(newEntity.Id);
+            if (toUpdate == null)
+            {
+                throw new AppException("You try to update something which not exists !", 500);
+            }
             if (toUpdate != null)
             {
-                IEnumerable<PropertyInfo> props = Utils.GetProps<T>();
+                IEnumerable<PropertyInfo> props = Utils.GetProps<T>().Where(prop => writableTypes.Contains(prop.PropertyType));
                 foreach (PropertyInfo prop in props)
                 {
                     prop.SetValue(toUpdate, prop.GetValue(newEntity));

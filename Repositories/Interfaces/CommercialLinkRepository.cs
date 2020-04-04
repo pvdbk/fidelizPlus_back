@@ -2,7 +2,7 @@
 {
     using Models;
 
-    public interface CommercialLinkRepository : Repository<CommercialLink>
+    public interface CommercialLinkRepository : CrudRepository<CommercialLink>
     {
         public int NullifyClient(int clientId);
 

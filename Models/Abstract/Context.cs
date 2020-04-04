@@ -5,7 +5,8 @@ namespace fidelizPlus_back.Models
 {
     public interface Context
     {
-        public DbSet<Account> Account { get; set; }
+        public DbSet<ClientAccount> ClientAccount { get; set; }
+        public DbSet<TraderAccount> TraderAccount { get; set; }
         public DbSet<Client> Client { get; set; }
         public DbSet<ClientOffer> ClientOffer { get; set; }
         public DbSet<Comment> Comment { get; set; }

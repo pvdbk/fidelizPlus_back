@@ -1,10 +1,74 @@
 ﻿using System;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Linq;
 
 namespace fidelizPlus_back
 {
     public static class FiltersHandler
     {
+        public static IEnumerable<Func<object, bool>> TreeToTests(
+            Type filteredType,
+            Tree filtersTree,
+            string[] toExclude = null
+        )
+        {
+            if (filtersTree.Type != "object")
+            {
+                throw new AppException("Bad filter for object", 400);
+            }
+            IEnumerable<PropertyInfo> props = Utils.GetProps(filteredType);
+            var ret = new List<Func<object, bool>>();
+            foreach (PropertyInfo prop in props)
+            {
+                string name = prop.Name;
+                Tree filter = filtersTree.Get(Utils.FirstToLower(name));
+                if (filter != null && (toExclude == null || !toExclude.Contains(name)))
+                {
+                    Func<object, bool> propTest = GetTest(prop.PropertyType, filter);
+                    ret.Add(toFilter => propTest(prop.GetValue(toFilter)));
+                }
+            }
+            return ret;
+        }
+
+        public static IEnumerable<TItem> Apply<TItem, TFiltered>(
+            IEnumerable<TItem> list,
+            Tree filtersTree,
+            Func<TItem, TFiltered> delegFilter,
+            string[] propsToExclude = null
+        )
+        {
+            IEnumerable<Func<object, bool>> tests = TreeToTests(typeof(TFiltered), filtersTree, propsToExclude);
+            Func<TItem, bool> filter = x => tests.All(test => test(delegFilter(x)));
+            return list.Where(filter);
+        }
+
+        public static IEnumerable<T> Apply<T>(
+            IEnumerable<T> list,
+            Tree filtersTree,
+            string[] propsToExclude = null
+        )
+        {
+            IEnumerable<Func<object, bool>> tests = TreeToTests(typeof(T), filtersTree, propsToExclude);
+            Func<T, bool> filter = x => tests.All(test => test(x));
+            return list.Where(filter);
+        }
+
+        static public Func<object, bool> GetTestForObject(Type type, Tree filter)
+        {
+            IEnumerable<Func<object, bool>> tests = TreeToTests(type, filter);
+            return x => tests.All(test => test(x));
+        }
+
+        static public Func<object, bool> GetTestForBool(Tree filter)
+        {
+            return (filter.Type == "boolean")
+                ? value => !((bool)value ^ (bool)filter.Value())
+                : AppException.Cast<Func<object, bool>>("Bad filter for bool", 400);
+        }
+
         static public Func<object, bool> GetTestForString(Tree filter)
         {
             Func<object, bool> ret = null;
@@ -112,8 +176,9 @@ namespace fidelizPlus_back
                 (type == typeof(string)) ? GetTestForString(filter) :
                 (type == typeof(int)) ? GetTestForInt(filter) :
                 (type == typeof(decimal)) ? GetTestForDecimal(filter) :
+                (type == typeof(bool)) ? GetTestForBool(filter) :
                 (type == typeof(DateTime)) ? GetTestForDateTime(filter) :
-                AppException.Cast<Func<object, bool>>($"Unhandled type : {type.Name}");
+                GetTestForObject(type, filter);
         }
     }
 }

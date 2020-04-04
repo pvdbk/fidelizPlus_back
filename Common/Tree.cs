@@ -10,7 +10,7 @@ namespace fidelizPlus_back
         private XElement content;
         private int? intValue;
 
-        public Tree(XElement content)
+        private Tree(XElement content)
         {
             this.content = content;
             this.intValue = null;
@@ -41,6 +41,7 @@ namespace fidelizPlus_back
                 type == "object" ? this :
                 type == "string" ? value :
                 type == "number" ? Utils.DecimalParse(value) :
+                type == "boolean" ? value == "true" :
                 type == "null" ? null :
                 AppException.Cast<object>($"Unhandled type : {type}");
         }

@@ -3,24 +3,25 @@
 namespace fidelizPlus_back.Controllers
 {
     using DTO;
+    using Models;
     using Services;
 
-    public abstract class AppController<T> : ControllerBase where T : DTO
+    public abstract class AppController<TEntity, TDTO> : ControllerBase where TEntity : Entity where TDTO : DTO
     {
-        private Service<T> service;
+        public CrudService<TEntity, TDTO> Service { get; }
 
-        public AppController(Service<T> service)
+        public AppController(CrudService<TEntity, TDTO> service)
         {
-            this.service = service;
+            this.Service = service;
         }
 
         [HttpGet]
         [Route("")]
-        public IActionResult FilterOrFindAll(string filter = null)
+        public IActionResult FilterOrFindAll(string filter)
         {
             try
             {
-                return Ok(filter == null ? this.service.FindAll() : this.service.Filter(filter));
+                return Ok(this.Service.FilterOrFindAll(filter));
             }
             catch (AppException e)
             {
@@ -30,11 +31,11 @@ namespace fidelizPlus_back.Controllers
 
         [HttpPost]
         [Route("")]
-        public IActionResult Save([FromBody] T data)
+        public IActionResult Save([FromBody] TDTO body)
         {
             try
             {
-                T dto = this.service.Save(data);
+                TDTO dto = this.Service.Save(body);
                 return Created($"http://{this.Request.Host}{this.Request.Path}/{dto.Id}", dto);
             }
             catch (AppException e)
@@ -49,7 +50,7 @@ namespace fidelizPlus_back.Controllers
         {
             try
             {
-                return Ok(this.service.FindById(id));
+                return Ok(this.Service.FindById(id));
             }
             catch (AppException e)
             {
@@ -63,8 +64,8 @@ namespace fidelizPlus_back.Controllers
         {
             try
             {
-                this.service.Delete(id);
-                return Ok(Utils.Quote("The deletion has been successful"));
+                this.Service.Delete(id);
+                return NoContent();
             }
             catch (AppException e)
             {
@@ -74,11 +75,11 @@ namespace fidelizPlus_back.Controllers
 
         [HttpPut]
         [Route("{id}")]
-        public IActionResult Update(int id, [FromBody] T data)
+        public IActionResult Update(int id, [FromBody] TDTO dto)
         {
             try
             {
-                return Ok(this.service.Update(id, data));
+                return Ok(this.Service.Update(id, dto));
             }
             catch (AppException e)
             {

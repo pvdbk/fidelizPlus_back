@@ -31,13 +31,14 @@ CREATE TABLE `app`.`client` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION);
 
-CREATE TABLE `app`.`account` (
+CREATE TABLE `app`.`client_account` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `client_id` INT NOT NULL,
+  `external_account` VARCHAR(500) NOT NULL,
   `balance` DECIMAL(10,2) NOT NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_account_client1_idx` (`client_id` ASC) VISIBLE,
-  CONSTRAINT `fk_account_client1`
+  INDEX `fk_client_account_client1_idx` (`client_id` ASC) VISIBLE,
+  CONSTRAINT `fk_client_account_client1`
     FOREIGN KEY (`client_id`)
     REFERENCES `app`.`client` (`id`)
     ON DELETE NO ACTION
@@ -48,7 +49,7 @@ CREATE TABLE `app`.`trader` (
   `user_id` INT NOT NULL,
   `connection_id` VARCHAR(45) NOT NULL,
   `label` VARCHAR(500) NOT NULL,
-  `address` VARCHAR(500) NOT NULL,
+  `address` VARCHAR(500) NULL DEFAULT NULL,
   `phone` VARCHAR(45) NULL DEFAULT NULL,
   `logo_path` VARCHAR(45) NULL,
   PRIMARY KEY (`id`),
@@ -57,6 +58,18 @@ CREATE TABLE `app`.`trader` (
   CONSTRAINT `fk_trader_user1`
     FOREIGN KEY (`user_id`)
     REFERENCES `app`.`user` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+CREATE TABLE `app`.`trader_account` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `trader_id` INT NOT NULL,
+  `external_account` VARCHAR(500) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_trader_account_client1_idx` (`trader_id` ASC) VISIBLE,
+  CONSTRAINT `fk_trader_account_client1`
+    FOREIGN KEY (`trader_id`)
+    REFERENCES `app`.`trader` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION);
 

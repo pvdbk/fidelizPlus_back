@@ -10,7 +10,6 @@ namespace fidelizPlus_back.Models
             ClientOffer = new HashSet<ClientOffer>();
         }
 
-        public override IEnumerable<string> Fields => new string[] { "Id", "TraderId", "StartTime", "EndTime", "ContentPath" };
         public int? TraderId { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }

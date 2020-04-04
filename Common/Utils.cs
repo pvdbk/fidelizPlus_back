@@ -25,6 +25,17 @@ namespace fidelizPlus_back
             return toJoin.Aggregate("", (x, y) => x == "" ? y : x + separator + y);
         }
 
+        public static int SetBit(int value, int bit, bool valBit)
+        {
+            int bitMask = 1 << bit;
+            return valBit ? value | bitMask : value & ~bitMask;
+        }
+
+        public static bool GetBit(int value, int bit)
+        {
+            return (value & (1 << bit)) != 0;
+        }
+
         public static decimal DecimalParse(string s)
         {
             return Decimal.Parse(
@@ -34,77 +45,60 @@ namespace fidelizPlus_back
             );
         }
 
-        public static IEnumerable<PropertyInfo> GetProps<T>() where T : new()
+        public static IEnumerable<PropertyInfo> GetProps(Type type)
         {
-            Type type = typeof(T);
-            T obj = new T();
-            IEnumerable<PropertyInfo> ret = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            if (obj is Models.Entity)
+            return type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        public static IEnumerable<PropertyInfo> GetProps<T>()
+        {
+            return GetProps(typeof(T));
+        }
+
+        public static TTarget Cast<TTarget, TSource>(TSource source, int? id = null) where TTarget : new()
+        {
+            TTarget ret = new TTarget();
+            var propsDic = new Dictionary<string, PropertyInfo>();
+            IEnumerable<PropertyInfo> retProps = Utils.GetProps<TTarget>();
+            foreach (PropertyInfo prop in retProps)
             {
-                IEnumerable<string> fields = (IEnumerable<string>)ret.Where(prop => prop.Name == "Fields").First().GetValue(obj);
-                ret = ret.Where(prop => fields.Contains(prop.Name));
+                propsDic.Add(prop.Name, prop);
+            }
+            IEnumerable<PropertyInfo> props = Utils.GetProps<TSource>().Where(prop => prop.Name != "Id" && propsDic.ContainsKey(prop.Name));
+            foreach (PropertyInfo prop in props)
+            {
+                propsDic[prop.Name].SetValue(ret, prop.GetValue(source));
+            }
+            if (id != null)
+            {
+                propsDic["Id"].SetValue(ret, id);
             }
             return ret;
         }
 
-        public static IEnumerable<(PropertyInfo, Func<object, bool>)> GetPropsTests<T>(
+        public static IEnumerable<Func<TFiltered, bool>> TreeToTests<TFiltered>(
             Tree filtersTree,
             string[] toExclude = null
-        ) where T : new()
+        )
         {
-            IEnumerable<PropertyInfo> props = GetProps<T>();
-            var ret = new List<(PropertyInfo, Func<object, bool>)>();
+            IEnumerable<PropertyInfo> props = GetProps<TFiltered>();
+            var ret = new List<Func<TFiltered, bool>>();
             foreach (PropertyInfo prop in props)
             {
                 string name = prop.Name;
                 Tree filter = filtersTree.Get(FirstToLower(name));
                 if (filter != null && (toExclude == null || !toExclude.Contains(name)))
                 {
-                    Func<object, bool> test = FiltersHandler.GetTest(prop.PropertyType, filter);
-                    ret.Add((prop, test));
+                    Func<object, bool> propTest = FiltersHandler.GetTest(prop.PropertyType, filter);
+                    ret.Add(toFilter => propTest(prop.GetValue(toFilter)));
                 }
             }
             return ret;
         }
 
-        public static IEnumerable<T> ApplyFilter<T, U>(
-            IEnumerable<T> list,
-            Tree filtersTree,
-            Func<T, object> delegFilter = null,
-            string[] propsToExclude = null
-        ) where U : new()
+        public static string ListToMessage(string header, IEnumerable<string> list)
         {
-            IEnumerable<(PropertyInfo, Func<object, bool>)> propsTests = GetPropsTests<U>(filtersTree, propsToExclude);
-            Func<T, bool> filter = (delegFilter == null)
-                ? (Func<T, bool>)(entity => propsTests.All(propTest =>
-                {
-                    var (prop, test) = propTest;
-                    return test(prop.GetValue(entity));
-                }))
-                : (Func<T, bool>)(entity => propsTests.All(propTest =>
-                {
-                    var (prop, test) = propTest;
-                    return test(prop.GetValue(delegFilter(entity)));
-                }));
-            return list.Where(filter);
-        }
-
-        public static void CheckDTO<T>(T dto, Func<string, bool> IsRequiredProp) where T : DTO.DTO, new()
-        {
-            if (dto.Id != null)
-            {
-                throw new AppException("Unexpected id field in the body", 400);
-            }
-            string missing = Join(
-                GetProps<T>()
-                    .Where(prop => IsRequiredProp(prop.Name) && prop.GetValue(dto) == null)
-                    .Select(prop => "   - " + prop.Name),
-                "\n"
-            );
-            if (missing != "")
-            {
-                throw new AppException($"Missing :\n{missing}", 400);
-            }
+            return (list.Count() == 0) ? "" : $"{header} :\n" + Join(list.Select(item => "   - " + item), "\n");
         }
     }
 }

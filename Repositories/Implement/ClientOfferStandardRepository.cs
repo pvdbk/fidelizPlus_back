@@ -5,7 +5,7 @@ namespace fidelizPlus_back.Repositories
 {
     using Models;
 
-    public class ClientOfferStandardRepository : StandardRepository<ClientOffer>, ClientOfferRepository
+    public class ClientOfferStandardRepository : CrudStandardRepository<ClientOffer>, ClientOfferRepository
     {
         public ClientOfferStandardRepository(Context ctxt) : base(ctxt)
         {

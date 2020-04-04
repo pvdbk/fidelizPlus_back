@@ -2,7 +2,7 @@
 {
     using Models;
 
-    public interface ClientOfferRepository : Repository<ClientOffer>
+    public interface ClientOfferRepository : CrudRepository<ClientOffer>
     {
         public int NullifyClient(int clientId);
     }

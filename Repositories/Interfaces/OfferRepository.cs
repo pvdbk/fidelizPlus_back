@@ -2,7 +2,7 @@
 {
     using Models;
 
-    public interface OfferRepository : Repository<Offer>
+    public interface OfferRepository : CrudRepository<Offer>
     {
         public int NullifyTrader(int traderId);
     }
