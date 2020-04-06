@@ -1,4 +1,6 @@
-﻿using System.Runtime.Serialization.Json;
+﻿using System;
+using System.Globalization;
+using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -28,7 +30,7 @@ namespace fidelizPlus_back
         }
 
         public int IntValue => this.intValue == null
-            ? AppException.Cast<int>("Unallowed use of the Tree.IntValue method")
+            ? new AppException("Unallowed use of the Tree.IntValue method").Cast<int>()
             : (int)this.intValue;
 
         public string Type => this.content.Attribute("type").Value;
@@ -40,10 +42,10 @@ namespace fidelizPlus_back
             return
                 type == "object" ? this :
                 type == "string" ? value :
-                type == "number" ? Utils.DecimalParse(value) :
+                type == "number" ? Decimal.Parse(value, NumberStyles.AllowDecimalPoint, new CultureInfo("en-US")) :
                 type == "boolean" ? value == "true" :
                 type == "null" ? null :
-                AppException.Cast<object>($"Unhandled type : {type}");
+                new AppException($"Unhandled type : {type}").Cast<object>();
         }
 
         public Tree Get(string path)

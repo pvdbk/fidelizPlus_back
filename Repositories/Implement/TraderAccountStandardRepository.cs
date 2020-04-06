@@ -7,7 +7,11 @@ namespace fidelizPlus_back.Repositories
 
     public class TraderAccountStandardRepository : CrudStandardRepository<TraderAccount>, TraderAccountRepository
     {
-        public TraderAccountStandardRepository(Context ctxt) : base(ctxt)
+        public TraderAccountStandardRepository(
+            Context ctxt,
+            FiltersHandler filtersHandler,
+            Utils utils
+        ) : base(ctxt, filtersHandler, utils)
         {
         }
 

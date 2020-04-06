@@ -7,7 +7,11 @@ namespace fidelizPlus_back.Repositories
 
     public class ClientAccountStandardRepository : CrudStandardRepository<ClientAccount>, ClientAccountRepository
     {
-        public ClientAccountStandardRepository(Context ctxt) : base(ctxt)
+        public ClientAccountStandardRepository(
+            Context ctxt,
+            FiltersHandler filtersHandler,
+            Utils utils
+        ) : base(ctxt, filtersHandler, utils)
         {
         }
 

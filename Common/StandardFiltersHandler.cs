@@ -1,14 +1,21 @@
 ﻿using System;
-using System.Text.RegularExpressions;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace fidelizPlus_back
 {
-    public static class FiltersHandler
+    public class StandardFiltersHandler : FiltersHandler
     {
-        public static IEnumerable<Func<object, bool>> TreeToTests(
+        private Utils utils;
+
+        public StandardFiltersHandler(Utils utils)
+        {
+            this.utils = utils;
+        }
+
+        public IEnumerable<Func<object, bool>> TreeToTests(
             Type filteredType,
             Tree filtersTree,
             string[] toExclude = null
@@ -18,12 +25,12 @@ namespace fidelizPlus_back
             {
                 throw new AppException("Bad filter for object", 400);
             }
-            IEnumerable<PropertyInfo> props = Utils.GetProps(filteredType);
+            IEnumerable<PropertyInfo> props = this.utils.GetProps(filteredType);
             var ret = new List<Func<object, bool>>();
             foreach (PropertyInfo prop in props)
             {
                 string name = prop.Name;
-                Tree filter = filtersTree.Get(Utils.FirstToLower(name));
+                Tree filter = filtersTree.Get(this.utils.FirstToLower(name));
                 if (filter != null && (toExclude == null || !toExclude.Contains(name)))
                 {
                     Func<object, bool> propTest = GetTest(prop.PropertyType, filter);
@@ -33,43 +40,43 @@ namespace fidelizPlus_back
             return ret;
         }
 
-        public static IEnumerable<TItem> Apply<TItem, TFiltered>(
+        public IEnumerable<TItem> Apply<TItem, TFiltered>(
             IEnumerable<TItem> list,
             Tree filtersTree,
             Func<TItem, TFiltered> delegFilter,
             string[] propsToExclude = null
         )
         {
-            IEnumerable<Func<object, bool>> tests = TreeToTests(typeof(TFiltered), filtersTree, propsToExclude);
+            IEnumerable<Func<object, bool>> tests = this.TreeToTests(typeof(TFiltered), filtersTree, propsToExclude);
             Func<TItem, bool> filter = x => tests.All(test => test(delegFilter(x)));
             return list.Where(filter);
         }
 
-        public static IEnumerable<T> Apply<T>(
+        public IEnumerable<T> Apply<T>(
             IEnumerable<T> list,
             Tree filtersTree,
             string[] propsToExclude = null
         )
         {
-            IEnumerable<Func<object, bool>> tests = TreeToTests(typeof(T), filtersTree, propsToExclude);
+            IEnumerable<Func<object, bool>> tests = this.TreeToTests(typeof(T), filtersTree, propsToExclude);
             Func<T, bool> filter = x => tests.All(test => test(x));
             return list.Where(filter);
         }
 
-        static public Func<object, bool> GetTestForObject(Type type, Tree filter)
+        public Func<object, bool> GetTestForObject(Type type, Tree filter)
         {
-            IEnumerable<Func<object, bool>> tests = TreeToTests(type, filter);
+            IEnumerable<Func<object, bool>> tests = this.TreeToTests(type, filter);
             return x => tests.All(test => test(x));
         }
 
-        static public Func<object, bool> GetTestForBool(Tree filter)
+        public Func<object, bool> GetTestForBool(Tree filter)
         {
             return (filter.Type == "boolean")
                 ? value => !((bool)value ^ (bool)filter.Value())
-                : AppException.Cast<Func<object, bool>>("Bad filter for bool", 400);
+                : new AppException("Bad filter for bool", 400).Cast<Func<object, bool>>();
         }
 
-        static public Func<object, bool> GetTestForString(Tree filter)
+        public Func<object, bool> GetTestForString(Tree filter)
         {
             Func<object, bool> ret = null;
             if (filter.Type == "string")
@@ -84,7 +91,7 @@ namespace fidelizPlus_back
             return ret;
         }
 
-        public static Func<object, bool> GetTestForInt(Tree filter)
+        public Func<object, bool> GetTestForInt(Tree filter)
         {
             Func<object, bool> ret = null;
             Tree minTree = filter.Get("min");
@@ -110,7 +117,7 @@ namespace fidelizPlus_back
             return ret;
         }
 
-        public static Func<object, bool> GetTestForDecimal(Tree filter)
+        public Func<object, bool> GetTestForDecimal(Tree filter)
         {
             Func<object, bool> ret = null;
             Tree minTree = filter.Get("min");
@@ -136,7 +143,7 @@ namespace fidelizPlus_back
             return ret;
         }
 
-        public static Func<object, bool> GetTestForDateTime(Tree filter)
+        public Func<object, bool> GetTestForDateTime(Tree filter)
         {
             Func<object, bool> ret = null;
             Tree minTree = filter.Get("min");
@@ -170,14 +177,15 @@ namespace fidelizPlus_back
             return ret;
         }
 
-        public static Func<object, bool> GetTest(Type type, Tree filter)
+        public Func<object, bool> GetTest(Type type, Tree filter)
         {
             return
-                (type == typeof(string)) ? GetTestForString(filter) :
-                (type == typeof(int)) ? GetTestForInt(filter) :
-                (type == typeof(decimal)) ? GetTestForDecimal(filter) :
-                (type == typeof(bool)) ? GetTestForBool(filter) :
-                (type == typeof(DateTime)) ? GetTestForDateTime(filter) :
+                (filter.Value() == null) ? x => x == null :
+                (type == typeof(string)) ? this.GetTestForString(filter) :
+                (type == typeof(int) || type == typeof(int?)) ? this.GetTestForInt(filter) :
+                (type == typeof(decimal) || type == typeof(decimal?)) ? this.GetTestForDecimal(filter) :
+                (type == typeof(bool) || type == typeof(bool?)) ? this.GetTestForBool(filter) :
+                (type == typeof(DateTime)) ? this.GetTestForDateTime(filter) :
                 GetTestForObject(type, filter);
         }
     }

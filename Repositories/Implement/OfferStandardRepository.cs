@@ -7,7 +7,11 @@ namespace fidelizPlus_back.Repositories
 
     public class OfferStandardRepository : CrudStandardRepository<Offer>, OfferRepository
     {
-        public OfferStandardRepository(Context ctxt) : base(ctxt)
+        public OfferStandardRepository(
+            Context ctxt,
+            FiltersHandler filtersHandler,
+            Utils utils
+        ) : base(ctxt, filtersHandler, utils)
         {
         }
 

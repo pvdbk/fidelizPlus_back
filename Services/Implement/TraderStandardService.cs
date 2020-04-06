@@ -1,5 +1,5 @@
-﻿using System.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace fidelizPlus_back.Services
 {
@@ -12,19 +12,23 @@ namespace fidelizPlus_back.Services
         private TraderAccountRepository accountRepo;
         private OfferRepository offerRepo;
         private CrudService<Client, ClientDTO> clientService;
+        private FiltersHandler filtersHandler;
 
         public TraderStandardService(
             UserEntityRepository<Trader> entityRepo,
+            Utils utils,
             CrudRepository<User> userRepo,
             CommercialLinkRepository commercialLinkRepo,
             TraderAccountRepository accountRepo,
             OfferRepository offerRepo,
-            CrudService<Client, ClientDTO> clientService
-        ) : base(entityRepo, userRepo, commercialLinkRepo)
+            CrudService<Client, ClientDTO> clientService,
+            FiltersHandler filtersHandler
+        ) : base(entityRepo, utils, userRepo, commercialLinkRepo)
         {
             this.offerRepo = offerRepo;
             this.accountRepo = accountRepo;
             this.clientService = clientService;
+            this.filtersHandler = filtersHandler;
         }
 
         public override bool IsRequiredProp(string propName)
@@ -46,7 +50,7 @@ namespace fidelizPlus_back.Services
         {
             Trader trader = this.FindEntity(id);
             this.repo.Entry(trader).Collection("TraderAccount").Load();
-            return trader.TraderAccount.Select(account => Utils.Cast<TraderAccountDTO, TraderAccount>(account));
+            return trader.TraderAccount.Select(account => this.Utils.Cast<TraderAccountDTO, TraderAccount>(account));
         }
 
         public TraderAccount FindAccountEntity(int traderId, int accountId)
@@ -61,7 +65,7 @@ namespace fidelizPlus_back.Services
 
         public TraderAccountDTO FindAccount(int traderId, int accountId)
         {
-            return Utils.Cast<TraderAccountDTO, TraderAccount>(this.FindAccountEntity(traderId, accountId));
+            return this.Utils.Cast<TraderAccountDTO, TraderAccount>(this.FindAccountEntity(traderId, accountId));
         }
 
         public CommercialLink FindCommercialLink(int traderId, int clientId)
@@ -77,12 +81,12 @@ namespace fidelizPlus_back.Services
             {
                 throw new AppException("Bad use of TraderStandardService.ExtendClientDTO");
             }
-            ClientDTOForTrader ret = Utils.Cast<ClientDTOForTrader, ClientDTO>(dto);
+            ClientDTOForTrader ret = this.Utils.Cast<ClientDTOForTrader, ClientDTO>(dto);
             ret.Id = dto.Id;
             CommercialLink cl = this.FindCommercialLink(traderId, (int)dto.Id);
             if (cl != null)
             {
-                ret.Flags = cl.ToDTO().Flags;
+                ret.Flags = this.ClToDTO(cl).Flags;
             }
             return ret;
         }
@@ -100,7 +104,7 @@ namespace fidelizPlus_back.Services
             IEnumerable<ClientDTOForTrader> ret = clientDTOs.Select(dto => this.ExtendClientDTO(id, dto));
             if (filter != null)
             {
-                ret = FiltersHandler.Apply(ret, new Tree(filter));
+                ret = this.filtersHandler.Apply(ret, new Tree(filter));
             }
             return ret;
         }

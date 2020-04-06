@@ -15,9 +15,10 @@ namespace fidelizPlus_back.Services
 
         public UserStandardService(
             UserEntityRepository<TEntity> repo,
+            Utils utils,
             CrudRepository<User> UserRepo,
             CommercialLinkRepository clRepo
-        ) : base(repo)
+        ) : base(repo, utils)
         {
             this.UserRepo = UserRepo;
             this.ClRepo = clRepo;
@@ -25,7 +26,7 @@ namespace fidelizPlus_back.Services
 
         public TEntity DTOToUserEntity(TDTO dto, int userId, int? id = null)
         {
-            TEntity entity = Utils.Cast<TEntity, TDTO>(dto, id);
+            TEntity entity = this.Utils.Cast<TEntity, TDTO>(dto, id);
             entity.UserId = userId;
             return entity;
         }
@@ -36,9 +37,9 @@ namespace fidelizPlus_back.Services
             {
                 ((UserEntityRepository<TEntity>)this.repo).FillUserProp(entity);
             }
-            TDTO ret = Utils.Cast<TDTO, TEntity>(entity, entity.Id);
-            TDTO forUser = Utils.Cast<TDTO, User>(entity.User);
-            IEnumerable<PropertyInfo> props = Utils.GetProps<TDTO>();
+            TDTO ret = this.Utils.Cast<TDTO, TEntity>(entity, entity.Id);
+            TDTO forUser = this.Utils.Cast<TDTO, User>(entity.User);
+            IEnumerable<PropertyInfo> props = this.Utils.GetProps<TDTO>();
             foreach (PropertyInfo prop in props)
             {
                 object value = prop.GetValue(forUser);
@@ -52,12 +53,12 @@ namespace fidelizPlus_back.Services
 
         public override TDTO Save(TDTO dto)
         {
-            CheckDTO(dto, this.IsUnexpectedProp, this.IsRequiredProp);
+            this.CheckDTO(dto, this.IsUnexpectedProp, this.IsRequiredProp);
             if (this.repo.FindAll().Any(entity => entity.ConnectionId == dto.ConnectionId))
             {
                 throw new AppException($"'{dto.ConnectionId}' is already used as connectionId", 400);
             }
-            User user = Utils.Cast<User, UserDTO>(dto);
+            User user = this.Utils.Cast<User, UserDTO>(dto);
             this.UserRepo.Save(user);
             TEntity entity = this.DTOToUserEntity(dto, user.Id);
             this.repo.Save(entity);
@@ -67,14 +68,25 @@ namespace fidelizPlus_back.Services
         public override TDTO Update(int id, TDTO dto)
         {
             TEntity entity = this.FindEntity(id);
-            CheckDTO(dto, this.IsUnexpectedProp, this.IsRequiredProp);
+            this.CheckDTO(dto, this.IsUnexpectedProp, this.IsRequiredProp);
             if (this.repo.FindAll().Any(entity => entity.ConnectionId == dto.ConnectionId && entity.Id != id))
             {
                 throw new AppException($"'{dto.ConnectionId}' is already used as connectionId", 400);
             }
             entity = this.repo.Update(this.DTOToUserEntity(dto, entity.UserId, id));
-            entity.User = this.UserRepo.Update(Utils.Cast<User, UserDTO>(dto, entity.UserId));
+            entity.User = this.UserRepo.Update(this.Utils.Cast<User, UserDTO>(dto, entity.UserId));
             return this.EntityToDTO(entity);
+        }
+
+        public CommercialLinkDTO ClToDTO(CommercialLink cl)
+        {
+            CommercialLinkDTO ret = this.Utils.Cast<CommercialLinkDTO, CommercialLink>(cl);
+            ret.Id = cl.Id;
+            ret.Flags = new ClType()
+            {
+                Bookmark = this.Utils.GetBit(cl.Type, CommercialLink.BOOKMARK)
+            };
+            return ret;
         }
     }
 }

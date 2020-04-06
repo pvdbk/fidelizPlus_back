@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System;
 
 namespace fidelizPlus_back.Services
 {
@@ -10,10 +10,12 @@ namespace fidelizPlus_back.Services
     public class CrudStandardService<TEntity, TDTO> : CrudService<TEntity, TDTO> where TEntity : Entity, new() where TDTO : DTO.DTO, new()
     {
         protected CrudRepository<TEntity> repo;
+        public Utils Utils { get; set; }
 
-        public CrudStandardService(CrudRepository<TEntity> repo)
+        public CrudStandardService(CrudRepository<TEntity> repo, Utils utils)
         {
             this.repo = repo;
+            this.Utils = utils;
         }
 
         public TEntity FindEntity(int id)
@@ -37,27 +39,27 @@ namespace fidelizPlus_back.Services
             return this.EntityToDTO(this.FindEntity(id));
         }
 
-        public static void CheckDTO(TDTO dto, Func<string, bool> IsUnexpectedProp, Func<string, bool> IsRequiredProp)
+        public void CheckDTO(TDTO dto, Func<string, bool> IsUnexpectedProp, Func<string, bool> IsRequiredProp)
         {
             var errorsStrings = new List<string>();
-            IEnumerable<string> problematicProps = Utils.GetProps<TDTO>()
+            IEnumerable<string> problematicProps = this.Utils.GetProps<TDTO>()
                 .Where(prop => IsUnexpectedProp(prop.Name) && prop.GetValue(dto) != null)
                 .Select(prop => prop.Name);
             if (problematicProps.Count() != 0)
             {
-                errorsStrings.Add(Utils.ListToMessage("Unexpected", problematicProps));
+                errorsStrings.Add(this.Utils.ListToMessage("Unexpected", problematicProps));
             }
-            problematicProps = Utils.GetProps<TDTO>()
+            problematicProps = this.Utils.GetProps<TDTO>()
                 .Where(prop => IsRequiredProp(prop.Name) && prop.GetValue(dto) == null)
                 .Select(prop => prop.Name);
             ;
             if (problematicProps.Count() != 0)
             {
-                errorsStrings.Add(Utils.ListToMessage("Missing", problematicProps));
+                errorsStrings.Add(this.Utils.ListToMessage("Missing", problematicProps));
             }
             if (errorsStrings.Count != 0)
             {
-                throw new AppException(Utils.Join(errorsStrings, "\n"), 400);
+                throw new AppException(this.Utils.Join(errorsStrings, "\n"), 400);
             }
         }
 
@@ -93,12 +95,12 @@ namespace fidelizPlus_back.Services
 
         public virtual TEntity DTOToEntity(TDTO dto)
         {
-            return Utils.Cast<TEntity, TDTO>(dto, dto.Id);
+            return this.Utils.Cast<TEntity, TDTO>(dto, dto.Id);
         }
 
         public virtual TDTO EntityToDTO(TEntity entity)
         {
-            return Utils.Cast<TDTO, TEntity>(entity, entity.Id);
+            return this.Utils.Cast<TDTO, TEntity>(entity, entity.Id);
         }
 
         public virtual void Delete(int id)

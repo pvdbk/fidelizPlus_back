@@ -6,8 +6,8 @@ using Microsoft.Extensions.Hosting;
 
 namespace fidelizPlus_back
 {
-    using Models;
     using DTO;
+    using Models;
     using Repositories;
     using Services;
 
@@ -37,6 +37,8 @@ namespace fidelizPlus_back
             services.AddSingleton(typeof(TraderService), typeof(TraderStandardService));
             services.AddSingleton(typeof(CrudService<Client, ClientDTO>), typeof(UserStandardService<Client, ClientDTO>));
             services.AddSingleton(typeof(CrudService<Trader, TraderDTO>), typeof(UserStandardService<Trader, TraderDTO>));
+            services.AddSingleton(typeof(FiltersHandler), typeof(StandardFiltersHandler));
+            services.AddSingleton(typeof(Utils), typeof(StandardUtils));
             services.AddControllers();
         }
 

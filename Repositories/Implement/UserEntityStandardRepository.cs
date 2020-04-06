@@ -8,7 +8,11 @@ namespace fidelizPlus_back.Repositories
 
     public class UserEntityStandardRepository<T> : CrudStandardRepository<T>, UserEntityRepository<T> where T : Entity, UserEntity
     {
-        public UserEntityStandardRepository(Context ctxt) : base(ctxt)
+        public UserEntityStandardRepository(
+            Context ctxt,
+            FiltersHandler filtersHandler,
+            Utils utils
+        ) : base(ctxt, filtersHandler, utils)
         {
         }
 
@@ -25,7 +29,7 @@ namespace fidelizPlus_back.Repositories
         public override IEnumerable<T> Filter(Tree filtersTree)
         {
             IEnumerable<T> clients = base.Filter(filtersTree);
-            return FiltersHandler.Apply<T, User>(clients, filtersTree, entity => entity.User, new string[] { "Id" });
+            return this.FiltersHandler.Apply<T, User>(clients, filtersTree, entity => entity.User, new string[] { "Id" });
         }
     }
 }

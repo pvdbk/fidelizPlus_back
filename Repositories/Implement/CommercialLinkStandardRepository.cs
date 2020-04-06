@@ -7,7 +7,11 @@ namespace fidelizPlus_back.Repositories
 
     public class CommercialLinkStandardRepository : CrudStandardRepository<CommercialLink>, CommercialLinkRepository
     {
-        public CommercialLinkStandardRepository(Context ctxt) : base(ctxt)
+        public CommercialLinkStandardRepository(
+            Context ctxt,
+            FiltersHandler filtersHandler,
+            Utils utils
+        ) : base(ctxt, filtersHandler, utils)
         {
         }
 

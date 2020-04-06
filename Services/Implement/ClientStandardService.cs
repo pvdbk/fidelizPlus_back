@@ -3,28 +3,32 @@ using System.Linq;
 
 namespace fidelizPlus_back.Services
 {
+    using DTO;
     using Models;
     using Repositories;
-    using DTO;
 
     public class ClientStandardService : UserStandardService<Client, ClientDTO>, ClientService
     {
         private ClientAccountRepository accountRepo;
         private ClientOfferRepository clientOfferRepo;
         private CrudService<Trader, TraderDTO> traderService;
+        private FiltersHandler filtersHandler;
 
         public ClientStandardService(
             UserEntityRepository<Client> entityRepo,
+            Utils utils,
             CrudRepository<User> userRepo,
             CommercialLinkRepository clRepo,
             ClientAccountRepository accountRepo,
             ClientOfferRepository clientOfferRepo,
-            CrudService<Trader, TraderDTO> traderService
-        ) : base(entityRepo, userRepo, clRepo)
+            CrudService<Trader, TraderDTO> traderService,
+            FiltersHandler filtersHandler
+        ) : base(entityRepo, utils, userRepo, clRepo)
         {
             this.accountRepo = accountRepo;
             this.clientOfferRepo = clientOfferRepo;
             this.traderService = traderService;
+            this.filtersHandler = filtersHandler;
         }
 
         public override bool IsRequiredProp(string propName)
@@ -46,7 +50,7 @@ namespace fidelizPlus_back.Services
         {
             Client client = this.FindEntity(id);
             this.repo.Entry(client).Collection("ClientAccount").Load();
-            return client.ClientAccount.Select(account => Utils.Cast<ClientAccountDTO, ClientAccount>(account));
+            return client.ClientAccount.Select(account => this.Utils.Cast<ClientAccountDTO, ClientAccount>(account));
         }
 
         public ClientAccount FindAccountEntity(int clientId, int accountId)
@@ -61,7 +65,7 @@ namespace fidelizPlus_back.Services
 
         public ClientAccountDTO FindAccount(int clientId, int accountId)
         {
-            return Utils.Cast<ClientAccountDTO, ClientAccount>(this.FindAccountEntity(clientId, accountId));
+            return this.Utils.Cast<ClientAccountDTO, ClientAccount>(this.FindAccountEntity(clientId, accountId));
         }
 
         public ClientAccountDTO UpdateAccount(int clientId, int accountId, int amount)
@@ -72,7 +76,7 @@ namespace fidelizPlus_back.Services
                 account.Balance += amount;
                 this.accountRepo.Update(account);
             }
-            return Utils.Cast<ClientAccountDTO, ClientAccount>(account);
+            return this.Utils.Cast<ClientAccountDTO, ClientAccount>(account);
         }
 
         public IEnumerable<TraderDTO> Traders(int id, string filter)
@@ -87,39 +91,37 @@ namespace fidelizPlus_back.Services
             IEnumerable<TraderDTO> ret = traders.Select(trader => this.traderService.EntityToDTO(trader));
             if (filter != null)
             {
-                ret = FiltersHandler.Apply(ret, new Tree(filter));
+                ret = this.filtersHandler.Apply(ret, new Tree(filter));
             }
             return ret;
         }
 
-        public CommercialLink FindCommercialLink(int clientId, int traderId)
+        public CommercialLink FindOrCreateCl(int clientId, int traderId)
         {
             Client client = this.FindEntity(clientId);
             this.repo.Entry(client).Collection("CommercialLink").Load();
-            return client.CommercialLink.Where(cl => cl.TraderId == traderId).FirstOrDefault();
+            CommercialLink cl = client.CommercialLink
+                .Where(cl => cl.TraderId == traderId)
+                .FirstOrDefault();
+            if (cl == null)
+            {
+                cl = new CommercialLink()
+                {
+                    ClientId = clientId,
+                    TraderId = traderId,
+                    Type = CommercialLink.DEFAULT_TYPE
+                };
+                this.ClRepo.Save(cl);
+            }
+            return cl;
         }
 
         public CommercialLinkDTO MarkTrader(int clientId, int traderId, bool bookMark)
         {
-            CommercialLink newCl = new CommercialLink()
-            {
-                ClientId = clientId,
-                TraderId = traderId
-            };
-            CommercialLink oldCl = FindCommercialLink(clientId, traderId);
-            if (oldCl == null)
-            {
-                this.traderService.FindEntity(traderId);
-                newCl.Type = Utils.SetBit(CommercialLink.DEFAULT_TYPE, CommercialLink.BOOKMARK, bookMark);
-                this.ClRepo.Save(newCl);
-            }
-            else
-            {
-                newCl.Id = oldCl.Id;
-                newCl.Type = Utils.SetBit(oldCl.Type, CommercialLink.BOOKMARK, bookMark);
-                newCl = this.ClRepo.Update(newCl);
-            }
-            return newCl.ToDTO();
+            CommercialLink cl = this.FindOrCreateCl(clientId, traderId);
+            cl.Type = Utils.SetBit(cl.Type, CommercialLink.BOOKMARK, bookMark);
+            cl = this.ClRepo.Update(cl);
+            return this.ClToDTO(cl);
         }
     }
 }

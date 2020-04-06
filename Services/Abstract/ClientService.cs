@@ -2,8 +2,8 @@
 
 namespace fidelizPlus_back.Services
 {
-    using Models;
     using DTO;
+    using Models;
 
     public interface ClientService : CrudService<Client, ClientDTO>
     {

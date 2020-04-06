@@ -7,7 +7,11 @@ namespace fidelizPlus_back.Repositories
 
     public class PurchaseCommentStandardRepository<T> : CrudStandardRepository<T>, PurchaseCommentRepository<T> where T : Entity, PurchaseComment
     {
-        public PurchaseCommentStandardRepository(Context ctxt) : base(ctxt)
+        public PurchaseCommentStandardRepository(
+            Context ctxt,
+            FiltersHandler filtersHandler,
+            Utils utils
+        ) : base(ctxt, filtersHandler, utils)
         {
         }
 

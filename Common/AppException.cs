@@ -5,12 +5,14 @@ namespace fidelizPlus_back
 {
     public class AppException : Exception
     {
+        private Func<string, string> quote;
         public int Status { get; }
         public object Content { get; }
 
         public AppException(object content, int status = 500) : base()
         {
-            this.Content = content is string ? Utils.Quote((string)content) : content;
+            this.quote = s => "\"" + s + "\"";
+            this.Content = content is string ? this.quote((string)content) : content;
             this.Status = status;
         }
 
@@ -20,7 +22,7 @@ namespace fidelizPlus_back
             if (this.Status == 500)
             {
                 Console.WriteLine(this.Content.ToString());    // To replace by something better
-                ret = controller.StatusCode(500, Utils.Quote("Server error"));
+                ret = controller.StatusCode(500, this.quote("Server error"));
             }
             else
             {
@@ -32,9 +34,9 @@ namespace fidelizPlus_back
             return ret;
         }
 
-        public static T Cast<T>(object content, int status = 500)
+        public T Cast<T>()
         {
-            throw new AppException(content, status);
+            throw this;
         }
     }
 }

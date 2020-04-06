@@ -14,9 +14,12 @@ namespace fidelizPlus_back.Repositories
         public Func<int> SaveChanges { get; }
         public DbSet<T> Entities { get; }
         public Func<object, EntityEntry> Entry { get; }
+        public FiltersHandler FiltersHandler { get; }
+        public Utils Utils { get; set; }
 
         private readonly IEnumerable<Type> writableTypes = new Type[] {
             typeof(bool),
+            typeof(bool?),
             typeof(int),
             typeof(int?),
             typeof(decimal),
@@ -24,11 +27,13 @@ namespace fidelizPlus_back.Repositories
             typeof(string)
         };
 
-        public CrudStandardRepository(Context context)
+        public CrudStandardRepository(Context context, FiltersHandler filtersHandler, Utils utils)
         {
             this.SaveChanges = context.SaveChanges;
             this.Entities = context.Set<T>();
             this.Entry = context.Entry;
+            this.FiltersHandler = filtersHandler;
+            this.Utils = utils;
         }
 
         public T FindById(int id)
@@ -73,7 +78,7 @@ namespace fidelizPlus_back.Repositories
             }
             if (toUpdate != null)
             {
-                IEnumerable<PropertyInfo> props = Utils.GetProps<T>().Where(prop => writableTypes.Contains(prop.PropertyType));
+                IEnumerable<PropertyInfo> props = this.Utils.GetProps<T>().Where(prop => writableTypes.Contains(prop.PropertyType));
                 foreach (PropertyInfo prop in props)
                 {
                     prop.SetValue(toUpdate, prop.GetValue(newEntity));
