@@ -7,7 +7,7 @@ namespace fidelizPlus_back.Services
 
     public interface ClientService : CrudService<Client, ClientDTO>
     {
-        public IEnumerable<ClientAccountDTO> Accounts(int id);
+        public IEnumerable<ClientAccountDTO> Accounts(int id, string filter);
 
         public ClientAccountDTO FindAccount(int clientId, int accountId);
 

@@ -46,17 +46,22 @@ namespace fidelizPlus_back.Services
             this.UserRepo.Delete(userId);
         }
 
-        public IEnumerable<TraderAccountDTO> Accounts(int id)
+        public IEnumerable<TraderAccountDTO> Accounts(int id, string filter)
         {
             Trader trader = this.FindEntity(id);
             this.repo.Entry(trader).Collection("TraderAccount").Load();
-            return trader.TraderAccount.Select(account => this.Utils.Cast<TraderAccountDTO, TraderAccount>(account));
+            IEnumerable<TraderAccountDTO> ret = trader.TraderAccount.Select(account => this.Utils.Cast<TraderAccountDTO, TraderAccount>(account));
+            if (filter != null)
+            {
+                ret = this.filtersHandler.Apply(ret, new Tree(filter));
+            }
+            return ret;
         }
 
         public TraderAccount FindAccountEntity(int traderId, int accountId)
         {
             TraderAccount account = this.accountRepo.FindById(accountId);
-            if (account == null || account.TraderId != traderId)
+            if (account?.TraderId != traderId)
             {
                 throw new AppException("Account not found", 404);
             }

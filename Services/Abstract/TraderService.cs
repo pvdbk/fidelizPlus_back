@@ -7,7 +7,7 @@ namespace fidelizPlus_back.Services
 
     public interface TraderService : CrudService<Trader, TraderDTO>
     {
-        public IEnumerable<TraderAccountDTO> Accounts(int id);
+        public IEnumerable<TraderAccountDTO> Accounts(int id, string filter);
 
         public TraderAccountDTO FindAccount(int traderId, int accountId);
 

@@ -16,44 +16,23 @@ namespace fidelizPlus_back.Controllers
 
         [HttpGet]
         [Route("{id}/accounts")]
-        public IActionResult Accounts(int id, string filter = null)
+        public IActionResult Accounts(int id, string filter)
         {
-            try
-            {
-                return Ok(((TraderService)this.Service).Accounts(id));
-            }
-            catch (AppException e)
-            {
-                return e.HandleFrom(this);
-            }
+            return Ok(((TraderService)this.Service).Accounts(id, filter));
         }
 
         [HttpGet]
         [Route("{TraderId}/accounts/{accountId}")]
         public IActionResult FindAccount(int traderId, int accountId)
         {
-            try
-            {
-                return Ok(((TraderService)this.Service).FindAccount(traderId, accountId));
-            }
-            catch (AppException e)
-            {
-                return e.HandleFrom(this);
-            }
+            return Ok(((TraderService)this.Service).FindAccount(traderId, accountId));
         }
 
         [HttpGet]
         [Route("{id}/clients")]
-        public IActionResult Clients(int id, string filter = null)
+        public IActionResult Clients(int id, string filter)
         {
-            try
-            {
-                return Ok(((TraderService)this.Service).Clients(id, filter));
-            }
-            catch (AppException e)
-            {
-                return e.HandleFrom(this);
-            }
+            return Ok(((TraderService)this.Service).Clients(id, filter));
         }
     }
 }

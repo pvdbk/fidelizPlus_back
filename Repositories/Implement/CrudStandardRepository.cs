@@ -76,15 +76,12 @@ namespace fidelizPlus_back.Repositories
             {
                 throw new AppException("You try to update something which not exists !", 500);
             }
-            if (toUpdate != null)
+            IEnumerable<PropertyInfo> props = this.Utils.GetProps<T>().Where(prop => writableTypes.Contains(prop.PropertyType));
+            foreach (PropertyInfo prop in props)
             {
-                IEnumerable<PropertyInfo> props = this.Utils.GetProps<T>().Where(prop => writableTypes.Contains(prop.PropertyType));
-                foreach (PropertyInfo prop in props)
-                {
-                    prop.SetValue(toUpdate, prop.GetValue(newEntity));
-                }
-                this.SaveChanges();
+                prop.SetValue(toUpdate, prop.GetValue(newEntity));
             }
+            this.SaveChanges();
             return toUpdate;
         }
     }

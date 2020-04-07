@@ -19,72 +19,37 @@ namespace fidelizPlus_back.Controllers
         [Route("")]
         public IActionResult FilterOrFindAll(string filter)
         {
-            try
-            {
-                return Ok(this.Service.FilterOrFindAll(filter));
-            }
-            catch (AppException e)
-            {
-                return e.HandleFrom(this);
-            }
+            return Ok(this.Service.FilterOrFindAll(filter));
         }
 
         [HttpPost]
         [Route("")]
         public IActionResult Save([FromBody] TDTO body)
         {
-            try
-            {
-                TDTO dto = this.Service.Save(body);
-                return Created($"http://{this.Request.Host}{this.Request.Path}/{dto.Id}", dto);
-            }
-            catch (AppException e)
-            {
-                return e.HandleFrom(this);
-            }
+            TDTO dto = this.Service.Save(body);
+            return Created($"http://{this.Request.Host}{this.Request.Path}/{dto.Id}", dto);
         }
 
         [HttpGet]
         [Route("{id}")]
         public IActionResult FindById(int id)
         {
-            try
-            {
-                return Ok(this.Service.FindById(id));
-            }
-            catch (AppException e)
-            {
-                return e.HandleFrom(this);
-            }
+            return Ok(this.Service.FindById(id));
         }
 
         [HttpDelete]
         [Route("{id}")]
         public IActionResult Delete(int id)
         {
-            try
-            {
-                this.Service.Delete(id);
-                return NoContent();
-            }
-            catch (AppException e)
-            {
-                return e.HandleFrom(this);
-            }
+            this.Service.Delete(id);
+            return NoContent();
         }
 
         [HttpPut]
         [Route("{id}")]
         public IActionResult Update(int id, [FromBody] TDTO dto)
         {
-            try
-            {
-                return Ok(this.Service.Update(id, dto));
-            }
-            catch (AppException e)
-            {
-                return e.HandleFrom(this);
-            }
+            return Ok(this.Service.Update(id, dto));
         }
     }
 }

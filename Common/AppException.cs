@@ -1,37 +1,38 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
 using System;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace fidelizPlus_back
 {
     public class AppException : Exception
     {
-        private Func<string, string> quote;
         public int Status { get; }
         public object Content { get; }
 
         public AppException(object content, int status = 500) : base()
         {
-            this.quote = s => "\"" + s + "\"";
-            this.Content = content is string ? this.quote((string)content) : content;
+            this.Content = content;
             this.Status = status;
         }
 
-        public IActionResult HandleFrom(ControllerBase controller)
+        public async Task HandleFrom(HttpContext context)
         {
-            IActionResult ret;
+            string jsonToSend;
             if (this.Status == 500)
             {
-                Console.WriteLine(this.Content.ToString());    // To replace by something better
-                ret = controller.StatusCode(500, this.quote("Server error"));
+                Console.WriteLine(this.Content);    // To replace by something better
+                jsonToSend = "\"Server error\"";
             }
             else
             {
-                ret =
-                    (this.Status == 400) ? controller.BadRequest(this.Content) :
-                    (this.Status == 404) ? controller.NotFound(this.Content) :
-                    controller.StatusCode(this.Status, this.Content);
+                jsonToSend = JsonSerializer.Serialize(this.Content);
             }
-            return ret;
+            context.Response.StatusCode = this.Status;
+            context.Response.ContentType = "application/json";
+            await context.Response.Body.WriteAsync(Encoding.UTF8.GetBytes(jsonToSend));
+            return;
         }
 
         public T Cast<T>()
