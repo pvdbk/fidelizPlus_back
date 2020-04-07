@@ -30,4 +30,3 @@ msbuild.wrn
 
 # Visual Studio
 .vs/
-obj/
