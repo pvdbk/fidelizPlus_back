@@ -2,13 +2,13 @@
 
 namespace fidelizPlus_back.Models
 {
-    public partial class AppContext : DbContext, Context
+    public partial class StandardAppContext : DbContext, AppContext
     {
-        public AppContext()
+        public StandardAppContext()
         {
         }
 
-        public AppContext(DbContextOptions<AppContext> options)
+        public StandardAppContext(DbContextOptions<StandardAppContext> options)
             : base(options)
         {
         }
@@ -28,7 +28,7 @@ namespace fidelizPlus_back.Models
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseMySql("server=localhost;port=3309;user=root;password=root;database=app", x => x.ServerVersion("8.0.19-mysql"));
+                optionsBuilder.UseMySql("server=localhost;port=2306;user=root;password=root;database=app", x => x.ServerVersion("10.4.8-mariadb"));
             }
         }
 
@@ -51,14 +51,14 @@ namespace fidelizPlus_back.Models
                     .HasColumnName("admin_password")
                     .HasColumnType("varchar(45)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.ConnectionId)
                     .IsRequired()
                     .HasColumnName("connection_id")
                     .HasColumnType("varchar(45)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -87,7 +87,7 @@ namespace fidelizPlus_back.Models
                     .HasColumnName("external_account")
                     .HasColumnType("varchar(500)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.ClientId).HasColumnName("client_id");
 
@@ -152,7 +152,7 @@ namespace fidelizPlus_back.Models
                     .HasColumnName("text")
                     .HasColumnType("varchar(500)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.HasOne(d => d.CommercialLink)
                     .WithMany(p => p.Comment)
@@ -177,7 +177,7 @@ namespace fidelizPlus_back.Models
 
                 entity.Property(e => e.TraderId).HasColumnName("trader_id");
 
-                entity.Property(e => e.Type).HasColumnName("type");
+                entity.Property(e => e.Status).HasColumnName("status");
 
                 entity.HasOne(d => d.Client)
                     .WithMany(p => p.CommercialLink)
@@ -204,7 +204,7 @@ namespace fidelizPlus_back.Models
                     .HasColumnName("content_path")
                     .HasColumnType("varchar(200)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.EndTime)
                     .HasColumnName("end_time")
@@ -241,6 +241,8 @@ namespace fidelizPlus_back.Models
                     .HasColumnName("paying_time")
                     .HasColumnType("datetime");
 
+                entity.Property(e => e.Status).HasColumnName("status");
+
                 entity.HasOne(d => d.CommercialLink)
                     .WithMany(p => p.Purchase)
                     .HasForeignKey(d => d.CommercialLinkId)
@@ -265,33 +267,33 @@ namespace fidelizPlus_back.Models
                     .HasColumnName("address")
                     .HasColumnType("varchar(500)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.ConnectionId)
                     .IsRequired()
                     .HasColumnName("connection_id")
                     .HasColumnType("varchar(45)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.Label)
                     .IsRequired()
                     .HasColumnName("label")
                     .HasColumnType("varchar(500)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.LogoPath)
                     .HasColumnName("logo_path")
                     .HasColumnType("varchar(45)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.Phone)
                     .HasColumnName("phone")
                     .HasColumnType("varchar(45)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.UserId).HasColumnName("user_id");
 
@@ -316,7 +318,7 @@ namespace fidelizPlus_back.Models
                     .HasColumnName("external_account")
                     .HasColumnType("varchar(500)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.TraderId).HasColumnName("trader_id");
 
@@ -338,28 +340,28 @@ namespace fidelizPlus_back.Models
                     .HasColumnName("email")
                     .HasColumnType("varchar(45)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.FirstName)
                     .IsRequired()
                     .HasColumnName("first_name")
                     .HasColumnType("varchar(45)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.Password)
                     .IsRequired()
                     .HasColumnName("password")
                     .HasColumnType("varchar(45)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
 
                 entity.Property(e => e.Surname)
                     .IsRequired()
                     .HasColumnName("surname")
                     .HasColumnType("varchar(45)")
                     .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                    .HasCollation("utf8mb4_unicode_ci");
             });
 
             OnModelCreatingPartial(modelBuilder);

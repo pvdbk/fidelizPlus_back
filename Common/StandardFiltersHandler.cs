@@ -6,12 +6,16 @@ using System.Text.RegularExpressions;
 
 namespace fidelizPlus_back
 {
+    using Errors;
+
     public class StandardFiltersHandler : FiltersHandler
     {
+        private Error error;
         private Utils utils;
 
-        public StandardFiltersHandler(Utils utils)
+        public StandardFiltersHandler(Error error, Utils utils)
         {
+            this.error = error;
             this.utils = utils;
         }
 
@@ -23,7 +27,7 @@ namespace fidelizPlus_back
         {
             if (filtersTree.Type != "object")
             {
-                throw new AppException("Bad filter for object", 400);
+                this.error.Throw("Bad filter for object", 400);
             }
             IEnumerable<PropertyInfo> props = this.utils.GetProps(filteredType);
             var ret = new List<Func<object, bool>>();
@@ -73,7 +77,7 @@ namespace fidelizPlus_back
         {
             return (filter.Type == "boolean")
                 ? value => !((bool)value ^ (bool)filter.Value())
-                : new AppException("Bad filter for bool", 400).Cast<Func<object, bool>>();
+                : this.error.TypedThrow<Func<object, bool>>("Bad filter for bool", 400);
         }
 
         public Func<object, bool> GetTestForString(Tree filter)
@@ -86,7 +90,7 @@ namespace fidelizPlus_back
             }
             else
             {
-                throw new AppException("Bad filter for string", 400);
+                this.error.Throw("Bad filter for string", 400);
             }
             return ret;
         }
@@ -112,7 +116,7 @@ namespace fidelizPlus_back
             }
             if (ret == null)
             {
-                throw new AppException("Bad filter for int", 400);
+                this.error.Throw("Bad filter for int", 400);
             }
             return ret;
         }
@@ -138,7 +142,7 @@ namespace fidelizPlus_back
             }
             if (ret == null)
             {
-                throw new AppException("Bad filter for decimal", 400);
+                this.error.Throw("Bad filter for decimal", 400);
             }
             return ret;
         }
@@ -172,7 +176,7 @@ namespace fidelizPlus_back
             }
             if (ret == null)
             {
-                throw new AppException("Bad filter for DateTime", 400);
+                this.error.Throw("Bad filter for DateTime", 400);
             }
             return ret;
         }

@@ -15,7 +15,7 @@ namespace fidelizPlus_back.Models
 
         public int? TraderId { get; set; }
         public int? ClientId { get; set; }
-        public int Type { get; set; }
+        public int Status { get; set; }
 
         public virtual Client Client { get; set; }
         public virtual Trader Trader { get; set; }

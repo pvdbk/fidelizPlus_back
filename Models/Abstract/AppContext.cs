@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace fidelizPlus_back.Models
 {
-    public interface Context
+    public interface AppContext
     {
         public DbSet<ClientAccount> ClientAccount { get; set; }
         public DbSet<TraderAccount> TraderAccount { get; set; }

@@ -1,12 +1,18 @@
-﻿version: "3.7"
+﻿version: "3.1"
 services:
-  db:
-    image: mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=root
-    ports:
-      - 3309:3306
-    volumes:
-      - my-db:/var/lib/mysql
-volumes:
-  my-db:
+    db:
+      image: mariadb:10.4.8
+      container_name: fidelizPlus 
+      environment:
+        - MYSQL_ROOT_PASSWORD=root
+        - MYSQL_USER=user
+        - MYSQL_PASSWORD=user
+      volumes: 
+        - ./bdd:/docker-entrypoint-initdb.d
+      ports:
+        - 2306:3306
+
+    adminer:
+      image: adminer 
+      ports:
+        - 2307:8080

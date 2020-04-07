@@ -3,15 +3,17 @@ using System.Linq;
 
 namespace fidelizPlus_back.Repositories
 {
+    using Errors;
     using Models;
 
     public class TraderAccountStandardRepository : CrudStandardRepository<TraderAccount>, TraderAccountRepository
     {
         public TraderAccountStandardRepository(
-            Context ctxt,
+            Error error,
+            AppContext ctxt,
             FiltersHandler filtersHandler,
             Utils utils
-        ) : base(ctxt, filtersHandler, utils)
+        ) : base(error, ctxt, filtersHandler, utils)
         {
         }
 

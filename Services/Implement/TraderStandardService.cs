@@ -4,6 +4,7 @@ using System.Linq;
 namespace fidelizPlus_back.Services
 {
     using DTO;
+    using Errors;
     using Models;
     using Repositories;
 
@@ -15,6 +16,7 @@ namespace fidelizPlus_back.Services
         private FiltersHandler filtersHandler;
 
         public TraderStandardService(
+            Error error,
             UserEntityRepository<Trader> entityRepo,
             Utils utils,
             CrudRepository<User> userRepo,
@@ -23,7 +25,7 @@ namespace fidelizPlus_back.Services
             OfferRepository offerRepo,
             CrudService<Client, ClientDTO> clientService,
             FiltersHandler filtersHandler
-        ) : base(entityRepo, utils, userRepo, commercialLinkRepo)
+        ) : base(error, entityRepo, utils, userRepo, commercialLinkRepo)
         {
             this.offerRepo = offerRepo;
             this.accountRepo = accountRepo;
@@ -42,18 +44,18 @@ namespace fidelizPlus_back.Services
             this.ClRepo.NullifyTrader(id);
             this.accountRepo.DeleteTrader(id);
             this.offerRepo.NullifyTrader(id);
-            this.repo.Delete(id);
+            this.Repo.Delete(id);
             this.UserRepo.Delete(userId);
         }
 
         public IEnumerable<TraderAccountDTO> Accounts(int id, string filter)
         {
             Trader trader = this.FindEntity(id);
-            this.repo.Entry(trader).Collection("TraderAccount").Load();
+            this.Repo.Entry(trader).Collection("TraderAccount").Load();
             IEnumerable<TraderAccountDTO> ret = trader.TraderAccount.Select(account => this.Utils.Cast<TraderAccountDTO, TraderAccount>(account));
             if (filter != null)
             {
-                ret = this.filtersHandler.Apply(ret, new Tree(filter));
+                ret = this.filtersHandler.Apply(ret, new Tree(filter, this.Error));
             }
             return ret;
         }
@@ -63,7 +65,7 @@ namespace fidelizPlus_back.Services
             TraderAccount account = this.accountRepo.FindById(accountId);
             if (account?.TraderId != traderId)
             {
-                throw new AppException("Account not found", 404);
+                this.Error.Throw("Account not found", 404);
             }
             return account;
         }
@@ -76,7 +78,7 @@ namespace fidelizPlus_back.Services
         public CommercialLink FindCommercialLink(int traderId, int clientId)
         {
             Trader trader = this.FindEntity(traderId);
-            this.repo.Entry(trader).Collection("CommercialLink").Load();
+            this.Repo.Entry(trader).Collection("CommercialLink").Load();
             return trader.CommercialLink.Where(cl => cl.ClientId == clientId).FirstOrDefault();
         }
 
@@ -84,7 +86,7 @@ namespace fidelizPlus_back.Services
         {
             if (dto.Id == null)
             {
-                throw new AppException("Bad use of TraderStandardService.ExtendClientDTO");
+                this.Error.Throw("Bad use of TraderStandardService.ExtendClientDTO");
             }
             ClientDTOForTrader ret = this.Utils.Cast<ClientDTOForTrader, ClientDTO>(dto);
             ret.Id = dto.Id;
@@ -99,7 +101,7 @@ namespace fidelizPlus_back.Services
         public IEnumerable<ClientDTOForTrader> Clients(int id, string filter)
         {
             Trader trader = this.FindEntity(id);
-            this.repo.Entry(trader).Collection("CommercialLink").Load();
+            this.Repo.Entry(trader).Collection("CommercialLink").Load();
             foreach (CommercialLink cl in trader.CommercialLink)
             {
                 this.ClRepo.Entry(cl).Reference("Client").Load();
@@ -109,7 +111,7 @@ namespace fidelizPlus_back.Services
             IEnumerable<ClientDTOForTrader> ret = clientDTOs.Select(dto => this.ExtendClientDTO(id, dto));
             if (filter != null)
             {
-                ret = this.filtersHandler.Apply(ret, new Tree(filter));
+                ret = this.filtersHandler.Apply(ret, new Tree(filter, this.Error));
             }
             return ret;
         }

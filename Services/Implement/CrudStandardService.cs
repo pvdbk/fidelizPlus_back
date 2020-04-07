@@ -4,33 +4,40 @@ using System.Linq;
 
 namespace fidelizPlus_back.Services
 {
+    using Errors;
     using Models;
     using Repositories;
 
     public class CrudStandardService<TEntity, TDTO> : CrudService<TEntity, TDTO> where TEntity : Entity, new() where TDTO : DTO.DTO, new()
     {
-        protected CrudRepository<TEntity> repo;
-        public Utils Utils { get; set; }
+        public Error Error { get; }
+        public CrudRepository<TEntity> Repo { get; }
+        public Utils Utils { get; }
 
-        public CrudStandardService(CrudRepository<TEntity> repo, Utils utils)
+        public CrudStandardService(
+            Error error,
+            CrudRepository<TEntity> repo,
+            Utils utils
+        )
         {
-            this.repo = repo;
+            this.Error = error;
+            this.Repo = repo;
             this.Utils = utils;
         }
 
         public TEntity FindEntity(int id)
         {
-            TEntity entity = this.repo.FindById(id);
+            TEntity entity = this.Repo.FindById(id);
             if (entity == default(TEntity))
             {
-                throw new AppException($"{typeof(TEntity).Name} not found", 404);
+                this.Error.Throw($"{typeof(TEntity).Name} not found", 404);
             }
             return entity;
         }
 
         public IEnumerable<TDTO> FilterOrFindAll(string filter)
         {
-            IEnumerable<TEntity> entities = filter == null ? this.repo.FindAll().ToList() : this.repo.Filter(new Tree(filter));
+            IEnumerable<TEntity> entities = filter == null ? this.Repo.FindAll().ToList() : this.Repo.Filter(new Tree(filter, this.Error));
             return entities.Select(this.EntityToDTO);
         }
 
@@ -59,7 +66,7 @@ namespace fidelizPlus_back.Services
             }
             if (errorsStrings.Count != 0)
             {
-                throw new AppException(this.Utils.Join(errorsStrings, "\n"), 400);
+                this.Error.Throw(this.Utils.Join(errorsStrings, "\n"), 400);
             }
         }
 
@@ -105,14 +112,14 @@ namespace fidelizPlus_back.Services
 
         public virtual void Delete(int id)
         {
-            this.repo.Delete(id);
+            this.Repo.Delete(id);
         }
 
         public virtual TDTO Save(TDTO dto)
         {
             CheckDTO(dto, this.IsUnexpectedForSaving, this.IsRequiredForSaving);
             TEntity entity = this.DTOToEntity(dto);
-            this.repo.Save(entity);
+            this.Repo.Save(entity);
             return this.EntityToDTO(entity);
         }
 
@@ -121,7 +128,7 @@ namespace fidelizPlus_back.Services
             TEntity entity = this.FindEntity(id);
             CheckDTO(dto, this.IsUnexpectedForUpdating, this.IsRequiredForUpdating);
             dto.Id = id;
-            entity = this.repo.Update(this.DTOToEntity(dto));
+            entity = this.Repo.Update(this.DTOToEntity(dto));
             return this.EntityToDTO(entity);
         }
     }

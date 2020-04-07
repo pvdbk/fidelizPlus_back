@@ -7,6 +7,7 @@ using System.Reflection;
 
 namespace fidelizPlus_back.Repositories
 {
+    using Errors;
     using Models;
 
     public class CrudStandardRepository<T> : CrudRepository<T> where T : Entity
@@ -14,6 +15,7 @@ namespace fidelizPlus_back.Repositories
         public Func<int> SaveChanges { get; }
         public DbSet<T> Entities { get; }
         public Func<object, EntityEntry> Entry { get; }
+        public Error Error { get; }
         public FiltersHandler FiltersHandler { get; }
         public Utils Utils { get; set; }
 
@@ -27,8 +29,14 @@ namespace fidelizPlus_back.Repositories
             typeof(string)
         };
 
-        public CrudStandardRepository(Context context, FiltersHandler filtersHandler, Utils utils)
+        public CrudStandardRepository(
+            Error error,
+            AppContext context,
+            FiltersHandler filtersHandler,
+            Utils utils
+        )
         {
+            this.Error = error;
             this.SaveChanges = context.SaveChanges;
             this.Entities = context.Set<T>();
             this.Entry = context.Entry;
@@ -74,7 +82,7 @@ namespace fidelizPlus_back.Repositories
             T toUpdate = this.FindById(newEntity.Id);
             if (toUpdate == null)
             {
-                throw new AppException("You try to update something which not exists !", 500);
+                this.Error.Throw("You try to update something which not exists !");
             }
             IEnumerable<PropertyInfo> props = this.Utils.GetProps<T>().Where(prop => writableTypes.Contains(prop.PropertyType));
             foreach (PropertyInfo prop in props)

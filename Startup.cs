@@ -2,11 +2,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace fidelizPlus_back
 {
     using DTO;
+    using Errors;
     using Models;
     using Repositories;
     using Services;
@@ -22,7 +22,9 @@ namespace fidelizPlus_back
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton(typeof(Context), typeof(AppContext));
+            services.AddSingleton(typeof(Error), typeof(StandardError));
+            services.AddSingleton(typeof(AppContext), typeof(StandardAppContext));
+            services.AddSingleton(typeof(LogContext), typeof(StandardLogContext));
             services.AddSingleton(typeof(CrudRepository<User>), typeof(CrudStandardRepository<User>));
             services.AddSingleton(typeof(UserEntityRepository<Client>), typeof(UserEntityStandardRepository<Client>));
             services.AddSingleton(typeof(UserEntityRepository<Trader>), typeof(UserEntityStandardRepository<Trader>));
