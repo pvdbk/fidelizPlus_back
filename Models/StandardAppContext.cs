@@ -149,6 +149,7 @@ namespace fidelizPlus_back.Models
                 entity.Property(e => e.Rating).HasColumnName("rating");
 
                 entity.Property(e => e.Text)
+                    .IsRequired()
                     .HasColumnName("text")
                     .HasColumnType("varchar(500)")
                     .HasCharSet("utf8mb4")
@@ -240,8 +241,6 @@ namespace fidelizPlus_back.Models
                 entity.Property(e => e.PayingTime)
                     .HasColumnName("paying_time")
                     .HasColumnType("datetime");
-
-                entity.Property(e => e.Status).HasColumnName("status");
 
                 entity.HasOne(d => d.CommercialLink)
                     .WithMany(p => p.Purchase)

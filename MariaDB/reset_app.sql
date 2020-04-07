@@ -96,8 +96,8 @@ CREATE TABLE `app`.`comment` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `commercial_link_id` INT NOT NULL,
   `creation_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `text` VARCHAR(500) NULL DEFAULT NULL,
-  `rating` INT NULL DEFAULT NULL,
+  `text` VARCHAR(500) NOT NULL,
+  `rating` INT NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_comment_commercial_link1_idx` (`commercial_link_id` ASC),
   CONSTRAINT `fk_comment_commercial_link1`
@@ -143,9 +143,8 @@ CREATE TABLE `app`.`client_offer` (
 CREATE TABLE `app`.`purchase` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `commercial_link_id` INT NOT NULL,
-  `paying_time` DATETIME NOT NULL,
+  `paying_time` DATETIME NULL DEFAULT NULL,
   `amount` DECIMAL(10,2) NOT NULL,
-  `status` INT NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_purchase_commercial_link1_idx` (`commercial_link_id` ASC),
   CONSTRAINT `fk_purchase_commercial_link1`
