@@ -3,28 +3,21 @@ using System.Linq;
 
 namespace fidelizPlus_back.Repositories
 {
-    using Errors;
-    using Models;
+    using AppModel;
 
     public class ClientOfferStandardRepository : CrudStandardRepository<ClientOffer>, ClientOfferRepository
     {
-        public ClientOfferStandardRepository(
-            Error error,
-            AppContext ctxt,
-            FiltersHandler filtersHandler,
-            Utils utils
-        ) : base(error, ctxt, filtersHandler, utils)
-        {
-        }
+        public ClientOfferStandardRepository(AppContext ctxt, Utils Utils) : base(ctxt, Utils)
+        { }
 
         public int NullifyClient(int clientId)
         {
-            List<ClientOffer> toUpdate = this.Entities.Where(co => co.ClientId == clientId).ToList();
+            List<ClientOffer> toUpdate = Entities.Where(co => co.ClientId == clientId).ToList();
             foreach (ClientOffer co in toUpdate)
             {
                 co.ClientId = null;
             }
-            this.SaveChanges();
+            SaveChanges();
             return toUpdate.Count;
         }
     }

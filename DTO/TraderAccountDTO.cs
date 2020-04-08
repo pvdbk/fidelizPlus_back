@@ -1,8 +1,7 @@
 ﻿namespace fidelizPlus_back.DTO
 {
-    public class TraderAccountDTO : DTO
+    public class TraderAccountDTO : AccountDTO
     {
-        public int TraderId { get; set; }
-        public string ExternalAccount { get; set; }
+        public string Gni { get; set; }
     }
 }

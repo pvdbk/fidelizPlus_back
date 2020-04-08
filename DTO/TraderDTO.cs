@@ -1,6 +1,6 @@
 ﻿namespace fidelizPlus_back.DTO
 {
-    public class TraderDTO : UserDTO
+    public class TraderDTO : UserDTO<TraderAccountDTO>
     {
         public string Label { get; set; }
         public string Address { get; set; }

@@ -11,5 +11,6 @@ USE `log`;
 
 CREATE TABLE `log`.`error_log` (
   `id` INT NOT NULL AUTO_INCREMENT,
+  `throwing_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `content` VARCHAR(500) NOT NULL,
   PRIMARY KEY (`id`));

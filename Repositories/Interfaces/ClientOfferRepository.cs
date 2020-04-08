@@ -1,6 +1,6 @@
 ﻿namespace fidelizPlus_back.Repositories
 {
-    using Models;
+    using AppModel;
 
     public interface ClientOfferRepository : CrudRepository<ClientOffer>
     {

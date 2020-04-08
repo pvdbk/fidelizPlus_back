@@ -7,17 +7,44 @@ using System.Reflection;
 
 namespace fidelizPlus_back.Repositories
 {
-    using Errors;
-    using Models;
+    using AppModel;
 
     public class CrudStandardRepository<T> : CrudRepository<T> where T : Entity
     {
         public Func<int> SaveChanges { get; }
         public DbSet<T> Entities { get; }
+        public Utils Utils { get; }
         public Func<object, EntityEntry> Entry { get; }
-        public Error Error { get; }
-        public FiltersHandler FiltersHandler { get; }
-        public Utils Utils { get; set; }
+
+        public CrudStandardRepository(AppContext ctxt, Utils utils)
+        {
+            SaveChanges = ctxt.SaveChanges;
+            Entities = ctxt.Set<T>();
+            Entry = ctxt.Entry;
+            Utils = utils;
+        }
+
+        public T FindById(int id)
+        {
+            return Entities.FirstOrDefault(entity => entity.Id == id);
+        }
+
+        public virtual IQueryable<T> FindAll()
+        {
+            return Entities;
+        }
+
+        public virtual void Save(T entity)
+        {
+            Entities.Add(entity);
+            SaveChanges();
+        }
+
+        public void Delete(int id)
+        {
+            Entities.Remove(FindById(id));
+            SaveChanges();
+        }
 
         private readonly IEnumerable<Type> writableTypes = new Type[] {
             typeof(bool),
@@ -29,67 +56,19 @@ namespace fidelizPlus_back.Repositories
             typeof(string)
         };
 
-        public CrudStandardRepository(
-            Error error,
-            AppContext context,
-            FiltersHandler filtersHandler,
-            Utils utils
-        )
-        {
-            this.Error = error;
-            this.SaveChanges = context.SaveChanges;
-            this.Entities = context.Set<T>();
-            this.Entry = context.Entry;
-            this.FiltersHandler = filtersHandler;
-            this.Utils = utils;
-        }
-
-        public T FindById(int id)
-        {
-            return this.Entities.FirstOrDefault(entity => entity.Id == id);
-        }
-
-        public virtual IQueryable<T> FindAll()
-        {
-            return this.Entities;
-        }
-
-        public virtual IEnumerable<T> Filter(Tree filtersTree)
-        {
-            return FiltersHandler.Apply<T>(this.FindAll(), filtersTree);
-        }
-
-        public virtual void Save(T entity)
-        {
-            this.Entities.Add(entity);
-            this.SaveChanges();
-        }
-
-        public bool Delete(int id)
-        {
-            T toDelete = this.FindById(id);
-            bool found = toDelete != null;
-            if (found)
-            {
-                this.Entities.Remove(toDelete);
-                this.SaveChanges();
-            }
-            return found;
-        }
-
         public T Update(T newEntity)
         {
-            T toUpdate = this.FindById(newEntity.Id);
+            T toUpdate = FindById(newEntity.Id);
             if (toUpdate == null)
             {
-                this.Error.Throw("You try to update something which not exists !");
+                throw new AppException("You try to update something which not exists !");
             }
-            IEnumerable<PropertyInfo> props = this.Utils.GetProps<T>().Where(prop => writableTypes.Contains(prop.PropertyType));
+            IEnumerable<PropertyInfo> props = Utils.GetProps<T>().Where(prop => writableTypes.Contains(prop.PropertyType));
             foreach (PropertyInfo prop in props)
             {
                 prop.SetValue(toUpdate, prop.GetValue(newEntity));
             }
-            this.SaveChanges();
+            SaveChanges();
             return toUpdate;
         }
     }

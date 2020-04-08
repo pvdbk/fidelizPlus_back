@@ -1,135 +1,150 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace fidelizPlus_back.Services
 {
-    using Errors;
-    using Models;
+    using AppModel;
     using Repositories;
 
-    public class CrudStandardService<TEntity, TDTO> : CrudService<TEntity, TDTO> where TEntity : Entity, new() where TDTO : DTO.DTO, new()
+    public class CrudStandardService<TEntity, TDTO> : CrudService<TEntity, TDTO>
+        where TEntity : Entity, new()
+        where TDTO : new()
     {
-        public Error Error { get; }
         public CrudRepository<TEntity> Repo { get; }
         public Utils Utils { get; }
+        public FiltersHandler FiltersHandler { get; }
+        public string[] UnexpectedForSaving { get; set; }
+        public string[] NotRequiredForSaving { get; set; }
+        public string[] UnexpectedForUpdating { get; set; }
+        public string[] NotRequiredForUpdating { get; set; }
 
         public CrudStandardService(
-            Error error,
             CrudRepository<TEntity> repo,
-            Utils utils
+            Utils utils,
+            FiltersHandler filtersHandler
         )
         {
-            this.Error = error;
-            this.Repo = repo;
-            this.Utils = utils;
+            Repo = repo;
+            Utils = utils;
+            FiltersHandler = filtersHandler;
+            UnexpectedForSaving = new string[0];
+            NotRequiredForSaving = new string[0];
+            UnexpectedForUpdating = new string[0];
+            NotRequiredForUpdating = new string[0];
         }
 
         public TEntity FindEntity(int id)
         {
-            TEntity entity = this.Repo.FindById(id);
+            TEntity entity = Repo.FindById(id);
             if (entity == default(TEntity))
             {
-                this.Error.Throw($"{typeof(TEntity).Name} not found", 404);
+                throw new AppException($"{typeof(TEntity).Name} not found", 404);
             }
             return entity;
         }
 
         public IEnumerable<TDTO> FilterOrFindAll(string filter)
         {
-            IEnumerable<TEntity> entities = filter == null ? this.Repo.FindAll().ToList() : this.Repo.Filter(new Tree(filter, this.Error));
-            return entities.Select(this.EntityToDTO);
+            IEnumerable<TEntity> entities = Repo.FindAll().ToList();
+            IEnumerable<TDTO> ret = entities.Select(EntityToDTO);
+            if (filter != null)
+            {
+                ret = FiltersHandler.Apply(ret, new Tree(filter));
+            }
+            return entities.Select(EntityToDTO);
         }
 
         public TDTO FindById(int id)
         {
-            return this.EntityToDTO(this.FindEntity(id));
-        }
-
-        public void CheckDTO(TDTO dto, Func<string, bool> IsUnexpectedProp, Func<string, bool> IsRequiredProp)
-        {
-            var errorsStrings = new List<string>();
-            IEnumerable<string> problematicProps = this.Utils.GetProps<TDTO>()
-                .Where(prop => IsUnexpectedProp(prop.Name) && prop.GetValue(dto) != null)
-                .Select(prop => prop.Name);
-            if (problematicProps.Count() != 0)
-            {
-                errorsStrings.Add(this.Utils.ListToMessage("Unexpected", problematicProps));
-            }
-            problematicProps = this.Utils.GetProps<TDTO>()
-                .Where(prop => IsRequiredProp(prop.Name) && prop.GetValue(dto) == null)
-                .Select(prop => prop.Name);
-            ;
-            if (problematicProps.Count() != 0)
-            {
-                errorsStrings.Add(this.Utils.ListToMessage("Missing", problematicProps));
-            }
-            if (errorsStrings.Count != 0)
-            {
-                this.Error.Throw(this.Utils.Join(errorsStrings, "\n"), 400);
-            }
-        }
-
-        public virtual bool IsUnexpectedProp(string propName)
-        {
-            return propName == "Id";
-        }
-
-        public virtual bool IsUnexpectedForSaving(string propName)
-        {
-            return this.IsUnexpectedProp(propName);
-        }
-
-        public virtual bool IsUnexpectedForUpdating(string propName)
-        {
-            return this.IsUnexpectedProp(propName);
-        }
-
-        public virtual bool IsRequiredProp(string propName)
-        {
-            return propName != "Id";
-        }
-
-        public virtual bool IsRequiredForSaving(string propName)
-        {
-            return this.IsRequiredProp(propName);
-        }
-
-        public virtual bool IsRequiredForUpdating(string propName)
-        {
-            return this.IsRequiredProp(propName);
+            return EntityToDTO(FindEntity(id));
         }
 
         public virtual TEntity DTOToEntity(TDTO dto)
         {
-            return this.Utils.Cast<TEntity, TDTO>(dto, dto.Id);
+            return Utils.Cast<TEntity, TDTO>(dto);
         }
 
         public virtual TDTO EntityToDTO(TEntity entity)
         {
-            return this.Utils.Cast<TDTO, TEntity>(entity, entity.Id);
+            return Utils.Cast<TDTO, TEntity>(entity);
         }
 
         public virtual void Delete(int id)
         {
-            this.Repo.Delete(id);
+            Repo.Delete(id);
         }
 
-        public virtual TDTO Save(TDTO dto)
+        public void CheckDTO(TDTO dto, string[] unexpectedProps, string[] notRequiredProps)
         {
-            CheckDTO(dto, this.IsUnexpectedForSaving, this.IsRequiredForSaving);
-            TEntity entity = this.DTOToEntity(dto);
-            this.Repo.Save(entity);
-            return this.EntityToDTO(entity);
+            IEnumerable<PropertyInfo> propsToLook = Utils.GetProps<TDTO>().Where(prop =>
+                prop.GetValue(dto) == null ^
+                unexpectedProps.Contains(prop.Name)
+            );
+            var unexpected = new List<string>();
+            var missing = new List<string>();
+            foreach (PropertyInfo prop in propsToLook)
+            {
+                if (prop.GetValue(dto) != null)
+                {
+                    unexpected.Add(prop.Name);
+                }
+                else if (!notRequiredProps.Contains(prop.Name))
+                {
+                    missing.Add(prop.Name);
+                }
+            }
+            int errorCode = 0;
+            errorCode += unexpected.Count == 0 ? 0 : 1;
+            errorCode += missing.Count == 0 ? 0 : 2;
+            object error =
+                errorCode == 0 ? (object)null :
+                errorCode == 1 ? (object)new { unexpected } :
+                errorCode == 2 ? (object)new { missing } :
+                (object)new { unexpected, missing };
+            if (error != null)
+            {
+                throw new AppException(error, 400);
+            }
+        }
+
+        public void CheckDTOForSaving(TDTO dto)
+        {
+            CheckDTO(dto, UnexpectedForSaving, NotRequiredForSaving);
+        }
+
+        public TEntity QuickSave(TDTO dto)
+        {
+            TEntity entity = DTOToEntity(dto);
+            Repo.Save(entity);
+            return entity;
+        }
+
+        public virtual (TDTO, int) Save(TDTO dto)
+        {
+            CheckDTOForSaving(dto);
+            TEntity entity = QuickSave(dto);
+            return (EntityToDTO(entity), entity.Id);
+        }
+
+        public void CheckDTOForUpdating(TDTO dto)
+        {
+            CheckDTO(dto, UnexpectedForUpdating, NotRequiredForUpdating);
+        }
+
+        public TEntity QuickUpdate(int id, TDTO dto)
+        {
+            TEntity entity = DTOToEntity(dto);
+            entity.Id = id;
+            return Repo.Update(entity);
         }
 
         public virtual TDTO Update(int id, TDTO dto)
         {
-            TEntity entity = this.FindEntity(id);
-            CheckDTO(dto, this.IsUnexpectedForUpdating, this.IsRequiredForUpdating);
-            dto.Id = id;
-            entity = this.Repo.Update(this.DTOToEntity(dto));
-            return this.EntityToDTO(entity);
+            CheckDTOForUpdating(dto);
+            FindEntity(id);
+            return EntityToDTO(QuickUpdate(id, dto));
         }
     }
 }

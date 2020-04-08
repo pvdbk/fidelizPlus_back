@@ -2,53 +2,45 @@
 
 namespace fidelizPlus_back.Controllers
 {
+    using AppModel;
     using DTO;
-    using Models;
     using Services;
 
     [Route("[controller]")]
     [ApiController]
     public class ClientsController : AppController<Client, ClientDTO>
     {
-        public ClientsController(ClientService service) : base(service)
+        private ClientService ClientService { get; }
+        private ClientAndTraderService BothService { get; }
+
+        public ClientsController(
+            ClientService clientService,
+            ClientAndTraderService bothService
+        ) : base(clientService)
         {
+            ClientService = clientService;
+            BothService = bothService;
         }
 
         [HttpGet]
-        [Route("{id}/accounts")]
-        public IActionResult Accounts(int id, string filter)
+        [Route("{id}/account")]
+        public IActionResult GetAccount(int id)
         {
-            return Ok(((ClientService)this.Service).Accounts(id, filter));
-        }
-
-        [HttpGet]
-        [Route("{clientId}/accounts/{accountId}")]
-        public IActionResult FindAccount(int clientId, int accountId)
-        {
-            return Ok(((ClientService)this.Service).FindAccount(clientId, accountId));
-        }
-
-        [HttpGet]
-        [Route("{clientId}/accounts/{accountId}")]
-        public IActionResult UpdateAccount(int clientId, int accountId, int amount)
-        {
-            return Ok(((ClientService)this.Service).UpdateAccount(clientId, accountId, amount));
+            return Ok(ClientService.GetAccount(id));
         }
 
         [HttpGet]
         [Route("{id}/traders")]
         public IActionResult Traders(int id, string filter)
         {
-            return Ok(((ClientService)this.Service).Traders(id, filter));
+            return Ok(BothService.TradersForClient(id, filter));
         }
 
         [HttpGet]
         [Route("{clientId}/traders/{traderId}")]
         public IActionResult MarkTrader(int clientId, int traderId, bool? bookmark)
         {
-            return bookmark == null
-                ? (IActionResult)NoContent()
-                : Ok(((ClientService)this.Service).MarkTrader(clientId, traderId, (bool)bookmark));
+            return Ok(BothService.MarkTrader(clientId, traderId, bookmark));
         }
     }
 }

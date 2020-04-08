@@ -1,6 +1,6 @@
 ﻿namespace fidelizPlus_back.DTO
 {
-    public class ClientDTO : UserDTO
+    public class ClientDTO : UserDTO<ClientAccountDTO>
     {
         public string AdminPassword { get; set; }
     }

@@ -1,37 +1,24 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace fidelizPlus_back.Repositories
 {
-    using Errors;
-    using Models;
+    using AppModel;
 
-    public class UserEntityStandardRepository<T> : CrudStandardRepository<T>, UserEntityRepository<T> where T : Entity, UserEntity
+    public class UserEntityStandardRepository<TEntity, TAccount> : CrudStandardRepository<TEntity>, UserEntityRepository<TEntity> where TEntity : UserEntity<TAccount>
     {
-        public UserEntityStandardRepository(
-            Error error,
-            AppContext ctxt,
-            FiltersHandler filtersHandler,
-            Utils utils
-        ) : base(error, ctxt, filtersHandler, utils)
+        public UserEntityStandardRepository(AppContext ctxt, Utils utils) : base(ctxt, utils)
+        { }
+
+        public override IQueryable<TEntity> FindAll()
         {
+            return base.FindAll().Include(entity => entity.User).Include(entity => entity.Account);
         }
 
-        public override IQueryable<T> FindAll()
+        public void SeekReferences(TEntity entity)
         {
-            return base.FindAll().Include(entity => entity.User);
-        }
-
-        public void FillUserProp(T entity)
-        {
-            this.Entry(entity).Reference("User").Load();
-        }
-
-        public override IEnumerable<T> Filter(Tree filtersTree)
-        {
-            IEnumerable<T> clients = base.Filter(filtersTree);
-            return this.FiltersHandler.Apply<T, User>(clients, filtersTree, entity => entity.User, new string[] { "Id" });
+            Entry(entity).Reference("User").Load();
+            Entry(entity).Reference("Account").Load();
         }
     }
 }

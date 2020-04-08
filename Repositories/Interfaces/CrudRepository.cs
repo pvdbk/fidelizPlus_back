@@ -1,16 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace fidelizPlus_back.Repositories
 {
-    using Models;
+    using AppModel;
 
     public interface CrudRepository<T> where T : Entity
     {
-        public IEnumerable<T> Filter(Tree filtersTree);
-
         public IQueryable<T> FindAll();
 
         public T FindById(int id);
@@ -19,7 +16,7 @@ namespace fidelizPlus_back.Repositories
 
         public T Update(T entity);
 
-        public bool Delete(int id);
+        public void Delete(int id);
 
         public Func<object, EntityEntry> Entry { get; }
     }

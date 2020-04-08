@@ -2,37 +2,35 @@
 
 namespace fidelizPlus_back.Controllers
 {
+    using AppModel;
     using DTO;
-    using Models;
     using Services;
 
     [Route("[controller]")]
     [ApiController]
     public class TradersController : AppController<Trader, TraderDTO>
     {
-        public TradersController(TraderService service) : base(service)
+        private TraderService TraderService { get; }
+        private ClientAndTraderService BothService { get; }
+
+        public TradersController(TraderService traderService, ClientAndTraderService bothService) : base(traderService)
         {
+            TraderService = traderService;
+            BothService = bothService;
         }
 
         [HttpGet]
-        [Route("{id}/accounts")]
-        public IActionResult Accounts(int id, string filter)
+        [Route("{id}/account")]
+        public IActionResult Accounts(int id)
         {
-            return Ok(((TraderService)this.Service).Accounts(id, filter));
-        }
-
-        [HttpGet]
-        [Route("{TraderId}/accounts/{accountId}")]
-        public IActionResult FindAccount(int traderId, int accountId)
-        {
-            return Ok(((TraderService)this.Service).FindAccount(traderId, accountId));
+            return Ok(TraderService.GetAccount(id));
         }
 
         [HttpGet]
         [Route("{id}/clients")]
         public IActionResult Clients(int id, string filter)
         {
-            return Ok(((TraderService)this.Service).Clients(id, filter));
+            return Ok(BothService.ClientsForTrader(id, filter));
         }
     }
 }

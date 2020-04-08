@@ -1,118 +1,53 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace fidelizPlus_back.Services
+﻿namespace fidelizPlus_back.Services
 {
+    using AppModel;
     using DTO;
-    using Errors;
-    using Models;
     using Repositories;
 
-    public class TraderStandardService : UserStandardService<Trader, TraderDTO>, TraderService
+    public class TraderStandardService : UserStandardService<Trader, TraderDTO, TraderAccount, TraderAccountDTO>, TraderService
     {
-        private TraderAccountRepository accountRepo;
-        private OfferRepository offerRepo;
-        private CrudService<Client, ClientDTO> clientService;
-        private FiltersHandler filtersHandler;
+        private OfferService OfferService { get; }
 
         public TraderStandardService(
-            Error error,
-            UserEntityRepository<Trader> entityRepo,
+            UserEntityRepository<Trader> repo,
             Utils utils,
-            CrudRepository<User> userRepo,
-            CommercialLinkRepository commercialLinkRepo,
-            TraderAccountRepository accountRepo,
-            OfferRepository offerRepo,
-            CrudService<Client, ClientDTO> clientService,
-            FiltersHandler filtersHandler
-        ) : base(error, entityRepo, utils, userRepo, commercialLinkRepo)
+            FiltersHandler filtersHandler,
+            CrudService<User, TraderDTO> userService,
+            CrudService<TraderAccount, TraderAccountDTO> accountService,
+            CommercialLinkService clService,
+            OfferService offerService
+        ) : base(repo, utils, filtersHandler, userService, accountService, clService)
         {
-            this.offerRepo = offerRepo;
-            this.accountRepo = accountRepo;
-            this.clientService = clientService;
-            this.filtersHandler = filtersHandler;
-        }
-
-        public override bool IsRequiredProp(string propName)
-        {
-            return propName != "Id" && propName != "Phone" && propName != "LogoPath" && propName != "Address";
+            OfferService = offerService;
+            NotRequiredForSaving = new string[] { "Address", "Phone", "LogoPath" };
+            NotRequiredForUpdating = new string[] { "Address", "Phone", "LogoPath" };
         }
 
         public override void Delete(int id)
         {
-            int userId = this.FindEntity(id).UserId;
-            this.ClRepo.NullifyTrader(id);
-            this.accountRepo.DeleteTrader(id);
-            this.offerRepo.NullifyTrader(id);
-            this.Repo.Delete(id);
-            this.UserRepo.Delete(userId);
+            Trader trader = FindEntity(id);
+            SeekReferences(trader);
+            ClService.NullifyTrader(id);
+            OfferService.NullifyTrader(id);
+            Repo.Delete(id);
+            UserService.Delete(trader.Id);
+            AccountService.Delete(trader.AccountId);
         }
 
-        public IEnumerable<TraderAccountDTO> Accounts(int id, string filter)
+        public ExtendedTraderDTO ExtendDTO(TraderDTO dto, int clientId)
         {
-            Trader trader = this.FindEntity(id);
-            this.Repo.Entry(trader).Collection("TraderAccount").Load();
-            IEnumerable<TraderAccountDTO> ret = trader.TraderAccount.Select(account => this.Utils.Cast<TraderAccountDTO, TraderAccount>(account));
-            if (filter != null)
+            ExtendedTraderDTO ret = null;
+            CommercialLink cl = null;
+            if (dto.Id != null)
             {
-                ret = this.filtersHandler.Apply(ret, new Tree(filter, this.Error));
+                ret = Utils.Cast<ExtendedTraderDTO, TraderDTO>(dto);
+                cl = ClService.FindWithBoth(clientId, (int)dto.Id);
             }
-            return ret;
-        }
-
-        public TraderAccount FindAccountEntity(int traderId, int accountId)
-        {
-            TraderAccount account = this.accountRepo.FindById(accountId);
-            if (account?.TraderId != traderId)
+            if (cl == null)
             {
-                this.Error.Throw("Account not found", 404);
+                throw new AppException("Bad use of ClientStandardService.ExtendDTO");
             }
-            return account;
-        }
-
-        public TraderAccountDTO FindAccount(int traderId, int accountId)
-        {
-            return this.Utils.Cast<TraderAccountDTO, TraderAccount>(this.FindAccountEntity(traderId, accountId));
-        }
-
-        public CommercialLink FindCommercialLink(int traderId, int clientId)
-        {
-            Trader trader = this.FindEntity(traderId);
-            this.Repo.Entry(trader).Collection("CommercialLink").Load();
-            return trader.CommercialLink.Where(cl => cl.ClientId == clientId).FirstOrDefault();
-        }
-
-        public ClientDTOForTrader ExtendClientDTO(int traderId, ClientDTO dto)
-        {
-            if (dto.Id == null)
-            {
-                this.Error.Throw("Bad use of TraderStandardService.ExtendClientDTO");
-            }
-            ClientDTOForTrader ret = this.Utils.Cast<ClientDTOForTrader, ClientDTO>(dto);
-            ret.Id = dto.Id;
-            CommercialLink cl = this.FindCommercialLink(traderId, (int)dto.Id);
-            if (cl != null)
-            {
-                ret.Flags = this.ClToDTO(cl).Flags;
-            }
-            return ret;
-        }
-
-        public IEnumerable<ClientDTOForTrader> Clients(int id, string filter)
-        {
-            Trader trader = this.FindEntity(id);
-            this.Repo.Entry(trader).Collection("CommercialLink").Load();
-            foreach (CommercialLink cl in trader.CommercialLink)
-            {
-                this.ClRepo.Entry(cl).Reference("Client").Load();
-            }
-            IEnumerable<Client> clients = trader.CommercialLink.Select(cl => cl.Client);
-            IEnumerable<ClientDTO> clientDTOs = clients.Select(client => this.clientService.EntityToDTO(client));
-            IEnumerable<ClientDTOForTrader> ret = clientDTOs.Select(dto => this.ExtendClientDTO(id, dto));
-            if (filter != null)
-            {
-                ret = this.filtersHandler.Apply(ret, new Tree(filter, this.Error));
-            }
+            ret.RelationStatus = ClService.GetClStatus(cl);
             return ret;
         }
     }

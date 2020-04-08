@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace fidelizPlus_back
 {
+    using AppModel;
     using DTO;
-    using Errors;
-    using Models;
+    using LogModel;
     using Repositories;
     using Services;
 
@@ -22,29 +21,41 @@ namespace fidelizPlus_back
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton(typeof(Error), typeof(StandardError));
+            services.AddSingleton(typeof(Utils), typeof(StandardUtils));
+            services.AddSingleton(typeof(FiltersHandler), typeof(StandardFiltersHandler));
+            services.AddSingleton(typeof(BankManager), typeof(StandardBankManager));
             services.AddSingleton(typeof(AppContext), typeof(StandardAppContext));
             services.AddSingleton(typeof(LogContext), typeof(StandardLogContext));
+
             services.AddSingleton(typeof(CrudRepository<User>), typeof(CrudStandardRepository<User>));
-            services.AddSingleton(typeof(UserEntityRepository<Client>), typeof(UserEntityStandardRepository<Client>));
-            services.AddSingleton(typeof(UserEntityRepository<Trader>), typeof(UserEntityStandardRepository<Trader>));
-            services.AddSingleton(typeof(PurchaseCommentRepository<Purchase>), typeof(PurchaseCommentStandardRepository<Purchase>));
-            services.AddSingleton(typeof(PurchaseCommentRepository<Comment>), typeof(PurchaseCommentStandardRepository<Comment>));
-            services.AddSingleton(typeof(ClientAccountRepository), typeof(ClientAccountStandardRepository));
-            services.AddSingleton(typeof(TraderAccountRepository), typeof(TraderAccountStandardRepository));
+            services.AddSingleton(typeof(CrudService<User, ClientDTO>), typeof(CrudStandardService<User, ClientDTO>));
+            services.AddSingleton(typeof(CrudService<User, TraderDTO>), typeof(CrudStandardService<User, TraderDTO>));
+
+            services.AddSingleton(typeof(UserEntityRepository<Client>), typeof(UserEntityStandardRepository<Client, ClientAccount>));
+            services.AddSingleton(typeof(CrudRepository<ClientAccount>), typeof(CrudStandardRepository<ClientAccount>));
+            services.AddSingleton(typeof(ClientService), typeof(ClientStandardService));
+
+            services.AddSingleton(typeof(UserEntityRepository<Trader>), typeof(UserEntityStandardRepository<Trader, TraderAccount>));
+            services.AddSingleton(typeof(CrudRepository<TraderAccount>), typeof(CrudStandardRepository<TraderAccount>));
+            services.AddSingleton(typeof(TraderService), typeof(TraderStandardService));
+
+            services.AddSingleton(typeof(PurchaseXorCommentRepository<Purchase>), typeof(PurchaseXorCommentStandardRepository<Purchase>));
+            services.AddSingleton(typeof(PurchaseXorCommentRepository<Comment>), typeof(PurchaseXorCommentStandardRepository<Comment>));
             services.AddSingleton(typeof(ClientOfferRepository), typeof(ClientOfferStandardRepository));
             services.AddSingleton(typeof(CommercialLinkRepository), typeof(CommercialLinkStandardRepository));
             services.AddSingleton(typeof(OfferRepository), typeof(OfferStandardRepository));
-            services.AddSingleton(typeof(ClientService), typeof(ClientStandardService));
-            services.AddSingleton(typeof(TraderService), typeof(TraderStandardService));
-            services.AddSingleton(typeof(CrudService<Client, ClientDTO>), typeof(UserStandardService<Client, ClientDTO>));
-            services.AddSingleton(typeof(CrudService<Trader, TraderDTO>), typeof(UserStandardService<Trader, TraderDTO>));
-            services.AddSingleton(typeof(FiltersHandler), typeof(StandardFiltersHandler));
-            services.AddSingleton(typeof(Utils), typeof(StandardUtils));
+
+            services.AddSingleton(typeof(CrudService<ClientAccount, ClientAccountDTO>), typeof(AccountStandardService<ClientAccount, ClientAccountDTO>));
+            services.AddSingleton(typeof(CrudService<TraderAccount, TraderAccountDTO>), typeof(AccountStandardService<TraderAccount, TraderAccountDTO>));
+            services.AddSingleton(typeof(CommercialLinkService), typeof(CommercialLinkStandardService));
+            services.AddSingleton(typeof(OfferService), typeof(OfferStandardService));
+            services.AddSingleton(typeof(ClientOfferService), typeof(ClientOfferStandardService));
+            services.AddSingleton(typeof(ClientAndTraderService), typeof(ClientAndTraderStandardService));
+
             services.AddControllers();
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app)
         {
             app.UseExceptionMiddleware();
 

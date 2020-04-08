@@ -1,9 +1,9 @@
 ﻿namespace fidelizPlus_back.Repositories
 {
-    using Models;
+    using AppModel;
 
     public interface UserEntityRepository<T> : CrudRepository<T> where T : Entity
     {
-        public void FillUserProp(T entity);
+        public void SeekReferences(T entity);
     }
 }
