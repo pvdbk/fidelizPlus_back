@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace fidelizPlus_back
 {
-    using LogModel;
+    using LogDomain;
 
     public class ExceptionMiddleware
     {

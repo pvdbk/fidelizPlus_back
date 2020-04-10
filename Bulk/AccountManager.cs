@@ -2,7 +2,7 @@
 
 namespace fidelizPlus_back
 {
-    using AppModel;
+    using AppDomain;
 
     public class AccountManager<T> where T : Account
     {

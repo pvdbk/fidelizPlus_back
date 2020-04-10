@@ -2,7 +2,7 @@
 
 namespace fidelizPlus_back.Controllers
 {
-    using AppModel;
+    using AppDomain;
     using DTO;
     using Services;
 

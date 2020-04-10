@@ -2,7 +2,7 @@
 
 namespace fidelizPlus_back.Controllers
 {
-    using AppModel;
+    using AppDomain;
     using Services;
 
     public abstract class AppController<TEntity, TDTO> : ControllerBase
