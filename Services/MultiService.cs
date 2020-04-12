@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace fidelizPlus_back.Services
@@ -6,20 +7,28 @@ namespace fidelizPlus_back.Services
     using AppDomain;
     using DTO;
 
-    public class ClientAndTraderService
+    public class MultiService
     {
         private Utils Utils { get; set; }
         private FiltersHandler FiltersHandler { get; }
         private ClientService ClientService { get; }
         private TraderService TraderService { get; }
         private CommercialLinkService ClService { get; }
+        private RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
+        private AccountService<ClientAccount, ClientAccountDTO> ClientAccountService { get; }
+        private AccountService<TraderAccount, TraderAccountDTO> TraderAccountService { get; }
+        private PaymentMonitor PaymentMonitor { get; }
 
-        public ClientAndTraderService(
+        public MultiService(
             Utils utils,
             FiltersHandler filtersHandler,
             ClientService clientService,
             TraderService traderService,
-            CommercialLinkService clService
+            CommercialLinkService clService,
+            RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
+            AccountService<ClientAccount, ClientAccountDTO> clientAccountService,
+            AccountService<TraderAccount, TraderAccountDTO> traderAccountService,
+            PaymentMonitor paymentMonitor
         )
         {
             Utils = utils;
@@ -27,6 +36,10 @@ namespace fidelizPlus_back.Services
             ClientService = clientService;
             TraderService = traderService;
             FiltersHandler = filtersHandler;
+            PurchaseService = purchaseService;
+            ClientAccountService = clientAccountService;
+            TraderAccountService = traderAccountService;
+            PaymentMonitor = paymentMonitor;
         }
 
         public IEnumerable<ExtendedTraderDTO> TradersForClient(int id, string filter)
@@ -93,6 +106,47 @@ namespace fidelizPlus_back.Services
             cl.Status = Utils.SetBit(cl.Status, CommercialLink.BOOKMARK, (bool)bookMark);
             ClService.QuickUpdate(cl.Id, cl);
             return TraderService.ExtendDTO(TraderService.EntityToDTO(trader), clientId);
+        }
+
+        public (PurchaseDTO, int) SavePurchase(int clientId, int traderId, decimal amount)
+        {
+            (CommercialLink cl, _, _) = FindOrCreateCl(clientId, traderId);
+            Purchase purchase = PurchaseService.Save(new Purchase()
+            {
+                CommercialLinkId = cl.Id,
+                PayingTime = null,
+                Amount = amount
+            });
+            return (PurchaseService.EntityToDTO(purchase), purchase.Id);
+        }
+
+        public PurchaseDTO Pay(int clientId, int purchaseId)
+        {
+            Purchase purchase = PurchaseService.FindEntity(purchaseId);
+            if (purchase.PayingTime != null)
+            {
+                throw new AppException("Already payed", 400);
+            }
+            decimal amount = purchase.Amount;
+            Client client = ClientService.FindEntity(clientId);
+            ClientService.SeekReferences(client);
+            ClientAccount source = client.Account;
+            if (amount > source.Balance)
+            {
+                throw new AppException("Not enough money", 400);
+            }
+            PaymentMonitor.Remove(purchaseId);
+            PurchaseService.SeekReferences(purchase);
+            Trader trader = TraderService.FindEntity(purchase.CommercialLink.TraderId);
+            TraderService.SeekReferences(trader);
+            TraderAccount target = trader.Account;
+            source.Balance -= amount;
+            target.Balance += amount;
+            purchase.PayingTime = DateTime.Now;
+            ClientAccountService.Update(source);
+            TraderAccountService.Update(target);
+            purchase = PurchaseService.Update(purchase);
+            return PurchaseService.EntityToDTO(purchase);
         }
     }
 }

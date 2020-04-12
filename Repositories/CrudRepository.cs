@@ -24,9 +24,14 @@ namespace fidelizPlus_back.Repositories
             Utils = utils;
         }
 
-        public T FindById(int id)
+        public T FindEntity(int? id)
         {
-            return Entities.FirstOrDefault(entity => entity.Id == id);
+            T entity = id == null ? null : Entities.FirstOrDefault(entity => entity.Id == id);
+            if (entity == null)
+            {
+                throw new AppException($"{typeof(T).Name} not found", 404);
+            }
+            return entity;
         }
 
         public virtual IQueryable<T> FindAll()
@@ -42,7 +47,7 @@ namespace fidelizPlus_back.Repositories
 
         public void Delete(int id)
         {
-            Entities.Remove(FindById(id));
+            Entities.Remove(FindEntity(id));
             SaveChanges();
         }
 
@@ -58,15 +63,14 @@ namespace fidelizPlus_back.Repositories
 
         public T Update(T newEntity)
         {
-            T toUpdate = FindById(newEntity.Id);
-            if (toUpdate == null)
+            T toUpdate = FindEntity(newEntity.Id);
+            if (toUpdate != newEntity)
             {
-                throw new AppException("You try to update something which not exists !");
-            }
-            IEnumerable<PropertyInfo> props = Utils.GetProps<T>().Where(prop => writableTypes.Contains(prop.PropertyType));
-            foreach (PropertyInfo prop in props)
-            {
-                prop.SetValue(toUpdate, prop.GetValue(newEntity));
+                IEnumerable<PropertyInfo> props = Utils.GetProps<T>().Where(prop => writableTypes.Contains(prop.PropertyType));
+                foreach (PropertyInfo prop in props)
+                {
+                    prop.SetValue(toUpdate, prop.GetValue(newEntity));
+                }
             }
             SaveChanges();
             return toUpdate;

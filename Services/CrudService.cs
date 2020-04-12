@@ -35,14 +35,9 @@ namespace fidelizPlus_back.Services
             NotRequiredForUpdating = new string[0];
         }
 
-        public TEntity FindEntity(int id)
+        public TEntity FindEntity(int? id)
         {
-            TEntity entity = Repo.FindById(id);
-            if (entity == default(TEntity))
-            {
-                throw new AppException($"{typeof(TEntity).Name} not found", 404);
-            }
-            return entity;
+            return Repo.FindEntity(id);
         }
 
         public IEnumerable<TDTO> FilterOrFindAll(string filter)
@@ -88,11 +83,11 @@ namespace fidelizPlus_back.Services
             {
                 if (prop.GetValue(dto) != null)
                 {
-                    unexpected.Add(prop.Name);
+                    unexpected.Add(Utils.FirstToLower(prop.Name));
                 }
                 else if (!notRequiredProps.Contains(prop.Name))
                 {
-                    missing.Add(prop.Name);
+                    missing.Add(Utils.FirstToLower(prop.Name));
                 }
             }
             int errorCode = 0;
@@ -114,14 +109,18 @@ namespace fidelizPlus_back.Services
             CheckDTO(dto, UnexpectedForSaving, NotRequiredForSaving);
         }
 
-        public TEntity QuickSave(TDTO dto)
+        public TEntity Save(TEntity entity)
         {
-            TEntity entity = DTOToEntity(dto);
             Repo.Save(entity);
             return entity;
         }
 
-        public virtual (TDTO, int) Save(TDTO dto)
+        public TEntity QuickSave(TDTO dto)
+        {
+            return Save(DTOToEntity(dto));
+        }
+
+        public virtual (TDTO, int) CheckSave(TDTO dto)
         {
             CheckDTOForSaving(dto);
             TEntity entity = QuickSave(dto);
@@ -133,14 +132,19 @@ namespace fidelizPlus_back.Services
             CheckDTO(dto, UnexpectedForUpdating, NotRequiredForUpdating);
         }
 
+        public TEntity Update(TEntity entity)
+        {
+            return Repo.Update(entity);
+        }
+
         public TEntity QuickUpdate(int id, TDTO dto)
         {
             TEntity entity = DTOToEntity(dto);
             entity.Id = id;
-            return Repo.Update(entity);
+            return Update(entity);
         }
 
-        public virtual TDTO Update(int id, TDTO dto)
+        public virtual TDTO CheckUpdate(int id, TDTO dto)
         {
             CheckDTOForUpdating(dto);
             FindEntity(id);

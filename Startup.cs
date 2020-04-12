@@ -1,8 +1,8 @@
-using System;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace fidelizPlus_back
 {
@@ -49,6 +49,8 @@ namespace fidelizPlus_back
             services.AddSingleton<Utils>();
             services.AddSingleton<FiltersHandler>();
             services.AddSingleton<BankManager>();
+            services.AddSingleton<PaymentMonitor>();
+            services.AddSingleton<LogService>();
 
             services.AddTransient<CrudRepository<User>>();
             services.AddSingleton<CrudService<User, ClientDTO>>();
@@ -62,8 +64,8 @@ namespace fidelizPlus_back
             services.AddTransient<CrudRepository<TraderAccount>>();
             services.AddSingleton<TraderService>();
 
-            services.AddTransient<PurchaseXorCommentRepository<Purchase>>();
-            services.AddTransient<PurchaseXorCommentRepository<Comment>>();
+            services.AddTransient<RelatedToBothRepository<Purchase>>();
+            services.AddTransient<RelatedToBothRepository<Comment>>();
             services.AddTransient<ClientOfferRepository>();
             services.AddTransient<CommercialLinkRepository>();
             services.AddTransient<OfferRepository>();
@@ -73,20 +75,25 @@ namespace fidelizPlus_back
             services.AddSingleton<CommercialLinkService>();
             services.AddSingleton<OfferService>();
             services.AddSingleton<ClientOfferService>();
-            services.AddSingleton<ClientAndTraderService>();
+            services.AddSingleton<MultiService>();
+            services.AddSingleton<RelatedToBothService<Purchase, PurchaseDTO>>();
 
             services.AddControllers();
         }
 
         public void Configure(IApplicationBuilder app)
         {
-            app.UseExceptionMiddleware();
+            app.UseExceptionHandler();
+
+            app.UseWebSockets();
 
             app.UseHttpsRedirection();
 
             app.UseRouting();
 
             app.UseAuthorization();
+
+            app.UsePaymentHandler();
 
             app.UseEndpoints(endpoints =>
             {

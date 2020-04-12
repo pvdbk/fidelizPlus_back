@@ -9,8 +9,13 @@ DROP SCHEMA IF EXISTS `log`;
 CREATE SCHEMA `log` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `log`;
 
-CREATE TABLE `log`.`error_log` (
+CREATE TABLE `log`.`error` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `throwing_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `content` VARCHAR(500) NOT NULL,
+  PRIMARY KEY (`id`));
+
+CREATE TABLE `log`.`test` (
+  `id` INT NOT NULL AUTO_INCREMENT,
   `content` VARCHAR(500) NOT NULL,
   PRIMARY KEY (`id`));

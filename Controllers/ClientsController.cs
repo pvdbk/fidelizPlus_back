@@ -11,11 +11,11 @@ namespace fidelizPlus_back.Controllers
     public class ClientsController : AppController<Client, ClientDTO>
     {
         private ClientService ClientService { get; }
-        private ClientAndTraderService BothService { get; }
+        private MultiService BothService { get; }
 
         public ClientsController(
             ClientService clientService,
-            ClientAndTraderService bothService
+            MultiService bothService
         ) : base(clientService)
         {
             ClientService = clientService;
@@ -41,6 +41,13 @@ namespace fidelizPlus_back.Controllers
         public IActionResult MarkTrader(int clientId, int traderId, bool? bookmark)
         {
             return Ok(BothService.MarkTrader(clientId, traderId, bookmark));
+        }
+
+        [HttpGet]
+        [Route("{clientId}/purchases/{purchaseId}")]
+        public IActionResult Pay(int clientId, int purchaseId)
+        {
+            return Ok(BothService.Pay(clientId, purchaseId));
         }
     }
 }

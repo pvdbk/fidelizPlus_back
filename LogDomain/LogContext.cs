@@ -11,13 +11,14 @@ namespace fidelizPlus_back.LogDomain
             : base(options)
         { }
 
-        public virtual DbSet<ErrorLog> ErrorLog { get; set; }
+        public virtual DbSet<Error> Error { get; set; }
+        public virtual DbSet<Test> Test { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<ErrorLog>(entity =>
+            modelBuilder.Entity<Error>(entity =>
             {
-                entity.ToTable("error_log");
+                entity.ToTable("error");
 
                 entity.Property(e => e.Id).HasColumnName("id");
 
@@ -32,6 +33,20 @@ namespace fidelizPlus_back.LogDomain
                     .HasColumnName("throwing_time")
                     .HasColumnType("datetime")
                     .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            });
+
+            modelBuilder.Entity<Test>(entity =>
+            {
+                entity.ToTable("test");
+
+                entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.Content)
+                    .IsRequired()
+                    .HasColumnName("content")
+                    .HasColumnType("varchar(500)")
+                    .HasCharSet("utf8mb4")
+                    .HasCollation("utf8mb4_unicode_ci");
             });
 
             OnModelCreatingPartial(modelBuilder);

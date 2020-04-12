@@ -25,9 +25,9 @@ namespace fidelizPlus_back.Controllers
 
         [HttpPost]
         [Route("")]
-        public IActionResult Save([FromBody] TDTO body)
+        public IActionResult Save([FromBody] TDTO bodyDTO)
         {
-            (TDTO dto, int id) = Service.Save(body);
+            (TDTO dto, int id) = Service.CheckSave(bodyDTO);
             return Created($"http://{Request.Host}{Request.Path}/{id}", dto);
         }
 
@@ -50,7 +50,7 @@ namespace fidelizPlus_back.Controllers
         [Route("{id}")]
         public IActionResult Update(int id, [FromBody] TDTO dto)
         {
-            return Ok(Service.Update(id, dto));
+            return Ok(Service.CheckUpdate(id, dto));
         }
     }
 }

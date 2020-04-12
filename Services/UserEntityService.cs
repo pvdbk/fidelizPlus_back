@@ -78,7 +78,7 @@ namespace fidelizPlus_back.Services
             return ret;
         }
 
-        public override (TDTO, int) Save(TDTO dto)
+        public override (TDTO, int) CheckSave(TDTO dto)
         {
             CheckDTOForSaving(dto);
             TAccountDTO accountDTO = dto.Account;
@@ -94,7 +94,7 @@ namespace fidelizPlus_back.Services
             return (EntityToDTO(entity), entity.Id);
         }
 
-        public override TDTO Update(int id, TDTO dto)
+        public override TDTO CheckUpdate(int id, TDTO dto)
         {
             CheckDTOForUpdating(dto);
             AccountService.CheckDTOForUpdating(dto.Account);

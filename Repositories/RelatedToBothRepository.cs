@@ -5,9 +5,9 @@ namespace fidelizPlus_back.Repositories
 {
     using AppDomain;
 
-    public class PurchaseXorCommentRepository<T> : CrudRepository<T> where T : PurchaseComment
+    public class RelatedToBothRepository<T> : CrudRepository<T> where T : RelatedToBoth
     {
-        public PurchaseXorCommentRepository(AppContext ctxt, Utils utils) : base(ctxt, utils)
+        public RelatedToBothRepository(AppContext ctxt, Utils utils) : base(ctxt, utils)
         { }
 
         public int DeleteCommercialLink(int clId)
@@ -22,6 +22,11 @@ namespace fidelizPlus_back.Repositories
             }
             SaveChanges();
             return toDelete.Count;
+        }
+
+        public void SeekReferences(T entity)
+        {
+            Entry(entity).Reference("CommercialLink").Load();
         }
     }
 }

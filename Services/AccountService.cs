@@ -32,7 +32,7 @@
             return account;
         }
 
-        public override TDTO Update(int id, TDTO dto)
+        public override TDTO CheckUpdate(int id, TDTO dto)
         {
             CheckDTOForUpdating(dto);
             dto.Balance = FindEntity(id).Balance;
