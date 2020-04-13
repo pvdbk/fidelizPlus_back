@@ -15,13 +15,14 @@ namespace fidelizPlus_back.Repositories
         public DbSet<T> Entities { get; }
         public Utils Utils { get; }
         public Func<object, EntityEntry> Entry { get; }
+        public IEnumerable<PropertyInfo> UpdatableProps { get; }
 
         public CrudRepository(AppContext ctxt, Utils utils)
         {
             SaveChanges = ctxt.SaveChanges;
             Entities = ctxt.Set<T>();
             Entry = ctxt.Entry;
-            Utils = utils;
+            UpdatableProps = utils.GetAtomicProps<T>();
         }
 
         public T FindEntity(int? id)
@@ -51,23 +52,12 @@ namespace fidelizPlus_back.Repositories
             SaveChanges();
         }
 
-        private readonly IEnumerable<Type> writableTypes = new Type[] {
-            typeof(bool),
-            typeof(bool?),
-            typeof(int),
-            typeof(int?),
-            typeof(decimal),
-            typeof(decimal?),
-            typeof(string)
-        };
-
         public T Update(T newEntity)
         {
             T toUpdate = FindEntity(newEntity.Id);
             if (toUpdate != newEntity)
             {
-                IEnumerable<PropertyInfo> props = Utils.GetProps<T>().Where(prop => writableTypes.Contains(prop.PropertyType));
-                foreach (PropertyInfo prop in props)
+                foreach (PropertyInfo prop in UpdatableProps)
                 {
                     prop.SetValue(toUpdate, prop.GetValue(newEntity));
                 }

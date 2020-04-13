@@ -7,6 +7,18 @@ namespace fidelizPlus_back
 {
     public class Utils
     {
+        private readonly IEnumerable<Type> atomicTypes = new Type[] {
+            typeof(bool),
+            typeof(bool?),
+            typeof(int),
+            typeof(int?),
+            typeof(decimal),
+            typeof(decimal?),
+            typeof(string),
+            typeof(DateTime),
+            typeof(DateTime?)
+        };
+
         public string Quote(string s)
         {
             return "\"" + s + "\"";
@@ -19,20 +31,15 @@ namespace fidelizPlus_back
                 : s.Substring(0, 1).ToLower() + s.Substring(1);
         }
 
-        public string Join(IEnumerable<string> toJoin, string separator)
+        public int SetBit(int value, int bitPosition, bool valBit)
         {
-            return toJoin.Aggregate("", (x, y) => x == "" ? y : x + separator + y);
-        }
-
-        public int SetBit(int value, int bit, bool valBit)
-        {
-            int bitMask = 1 << bit;
+            int bitMask = 1 << bitPosition;
             return valBit ? value | bitMask : value & ~bitMask;
         }
 
-        public bool GetBit(int value, int bit)
+        public bool GetBit(int value, int bitPosition)
         {
-            return (value & (1 << bit)) != 0;
+            return (value & (1 << bitPosition)) != 0;
         }
 
         public IEnumerable<PropertyInfo> GetProps(Type type)
@@ -43,6 +50,11 @@ namespace fidelizPlus_back
         public IEnumerable<PropertyInfo> GetProps<T>()
         {
             return GetProps(typeof(T));
+        }
+
+        public IEnumerable<PropertyInfo> GetAtomicProps<T>()
+        {
+            return GetProps<T>().Where(prop => atomicTypes.Contains(prop.PropertyType));
         }
 
         public TTarget Cast<TTarget, TSource>(TSource source) where TTarget : new()

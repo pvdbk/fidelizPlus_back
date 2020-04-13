@@ -23,15 +23,23 @@ namespace fidelizPlus_back
             _IntValue = null;
         }
 
-        public Tree(string s) : this(
-            XElement.Load(
-                JsonReaderWriterFactory.CreateJsonReader(
-                    Encoding.UTF8.GetBytes(s),
-                    new System.Xml.XmlDictionaryReaderQuotas()
-                )
-            )
-        )
-        { }
+        public Tree(string s)
+        {
+            try
+            {
+                this.Content = XElement.Load(
+                    JsonReaderWriterFactory.CreateJsonReader(
+                        Encoding.UTF8.GetBytes(s),
+                        new System.Xml.XmlDictionaryReaderQuotas()
+                    )
+                );
+            }
+            catch
+            {
+                throw new AppException("Bad Json", 400);
+            }
+            _IntValue = null;
+        }
 
         public object Value()
         {

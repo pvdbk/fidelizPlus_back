@@ -2,6 +2,6 @@
 {
     public class ExtendedTraderDTO : TraderDTO
     {
-        public CommercialLinkStatus RelationStatus { get; set; }
+        public CommercialRelation CommercialRelation { get; set; }
     }
 }

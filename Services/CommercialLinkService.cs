@@ -9,14 +9,17 @@ namespace fidelizPlus_back.Services
     public class CommercialLinkService : CrudService<CommercialLink, CommercialLink>
     {
         private CommercialLinkRepository ClRepo { get; }
+        private RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
 
         public CommercialLinkService(
             CommercialLinkRepository repo,
             Utils utils,
-            FiltersHandler filtersHandler
+            FiltersHandler filtersHandler,
+             RelatedToBothService<Purchase, PurchaseDTO> purchaseService
         ) : base(repo, utils, filtersHandler)
         {
             ClRepo = repo;
+            PurchaseService = purchaseService;
         }
 
         public override CommercialLink EntityToDTO(CommercialLink entity)
@@ -44,11 +47,17 @@ namespace fidelizPlus_back.Services
             ClRepo.NullifyTrader(traderId);
         }
 
-        public CommercialLinkStatus GetClStatus(CommercialLink cl)
+        public CommercialRelation GetClStatus(CommercialLink cl)
         {
-            return new CommercialLinkStatus()
+            SeekReferences(cl);
+            return new CommercialRelation()
             {
-                Bookmark = Utils.GetBit(cl.Status, CommercialLink.BOOKMARK)
+                Bookmark = Utils.GetBit(cl.Status, CommercialLink.BOOKMARK),
+                Debt = PurchaseService
+                    .FilterOrFindAll(null)
+                    .Where(purchase => purchase.ClientId == cl.Client.Id && purchase.PayingTime == null)
+                    .Select(purchase => purchase.Amount)
+                    .Aggregate(0m, (x, y) => x + y)
             };
         }
 

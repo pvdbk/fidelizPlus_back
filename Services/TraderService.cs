@@ -47,7 +47,7 @@
             {
                 throw new AppException("Bad use of ClientStandardService.ExtendDTO");
             }
-            ret.RelationStatus = ClService.GetClStatus(cl);
+            ret.CommercialRelation = ClService.GetClStatus(cl);
             return ret;
         }
     }

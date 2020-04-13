@@ -9,7 +9,6 @@ namespace fidelizPlus_back
 {
     using AppDomain;
     using DTO;
-    using LogDomain;
     using Services;
 
     public class PaymentHandler
@@ -21,8 +20,7 @@ namespace fidelizPlus_back
         public PaymentHandler(
             RequestDelegate next,
             PaymentMonitor monitor,
-            RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
-            LogService logService
+            RelatedToBothService<Purchase, PurchaseDTO> purchaseService
         )
         {
             Next = next;
