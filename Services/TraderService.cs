@@ -1,4 +1,7 @@
-﻿namespace fidelizPlus_back.Services
+﻿using System.Linq;
+using System.Collections.Generic;
+
+namespace fidelizPlus_back.Services
 {
     using AppDomain;
     using DTO;
@@ -7,17 +10,19 @@
     public class TraderService : UserEntityService<Trader, TraderDTO, TraderAccount, TraderAccountDTO>
     {
         private OfferService OfferService { get; }
+        private RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
 
         public TraderService(
             UserEntityRepository<Trader, TraderAccount> repo,
             Utils utils,
-            FiltersHandler filtersHandler,
             CrudService<User, TraderDTO> userService,
             AccountService<TraderAccount, TraderAccountDTO> accountService,
             CommercialLinkService clService,
+            RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
             OfferService offerService
-        ) : base(repo, utils, filtersHandler, userService, accountService, clService)
+        ) : base(repo, utils, userService, accountService, clService)
         {
+            PurchaseService = purchaseService;
             OfferService = offerService;
             NotRequiredForSaving = new string[] { "Address", "Phone", "LogoPath" };
             NotRequiredForUpdating = new string[] { "Address", "Phone", "LogoPath" };
@@ -48,6 +53,13 @@
                 throw new AppException("Bad use of ClientStandardService.ExtendDTO");
             }
             ret.CommercialRelation = ClService.GetClStatus(cl);
+            return ret;
+        }
+
+        public IEnumerable<PurchaseDTO> Purchases(int id, string filter)
+        {
+            IEnumerable<PurchaseDTO> ret = PurchaseService.FilterOrFindAll(null).Where(purchase => purchase.TraderId == id);
+            ret = Utils.ApplyFilter(ret, filter);
             return ret;
         }
     }

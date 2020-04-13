@@ -23,7 +23,7 @@ namespace fidelizPlus_back.Controllers
         [Route("{id}/account")]
         public IActionResult Accounts(int id)
         {
-            return Ok(TraderService.GetAccount(id));
+            return Ok(TraderService.GetAccountDTO(id));
         }
 
         [HttpGet]
@@ -31,6 +31,13 @@ namespace fidelizPlus_back.Controllers
         public IActionResult Clients(int id, string filter)
         {
             return Ok(MultiService.ClientsForTrader(id, filter));
+        }
+
+        [HttpGet]
+        [Route("{id}/purchases")]
+        public IActionResult Purchases(int id, string filter)
+        {
+            return Ok(TraderService.Purchases(id, filter));
         }
 
         [HttpPost]

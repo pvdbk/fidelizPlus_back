@@ -8,11 +8,7 @@
         where TEntity : Account, new()
         where TDTO : AccountDTO, new()
     {
-        public AccountService(
-            CrudRepository<TEntity> repo,
-            Utils utils,
-            FiltersHandler filtersHandler
-        ) : base(repo, utils, filtersHandler)
+        public AccountService(CrudRepository<TEntity> repo, Utils utils) : base(repo, utils)
         {
             UnexpectedForSaving = new string[] { "Balance" };
             UnexpectedForUpdating = new string[] { "Balance" };

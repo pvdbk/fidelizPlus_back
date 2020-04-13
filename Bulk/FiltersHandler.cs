@@ -42,25 +42,35 @@ namespace fidelizPlus_back
 
         public IEnumerable<TItem> Apply<TItem, TFiltered>(
             IEnumerable<TItem> list,
-            Tree filtersTree,
+            string filter,
             Func<TItem, TFiltered> delegFilter,
             string[] propsToExclude = null
         )
         {
-            IEnumerable<Func<object, bool>> tests = TreeToTests(typeof(TFiltered), filtersTree, propsToExclude);
-            Func<TItem, bool> filter = x => tests.All(test => test(delegFilter(x)));
-            return list.Where(filter);
+            IEnumerable<TItem> ret = list;
+            if (filter != null)
+            {
+                IEnumerable<Func<object, bool>> tests = TreeToTests(typeof(TFiltered), new Tree(filter), propsToExclude);
+                Func<TItem, bool> filterFunc = x => tests.All(test => test(delegFilter(x)));
+                ret = ret.Where(filterFunc);
+            }
+            return ret;
         }
 
         public IEnumerable<T> Apply<T>(
             IEnumerable<T> list,
-            Tree filtersTree,
+            string filter,
             string[] propsToExclude = null
         )
         {
-            IEnumerable<Func<object, bool>> tests = TreeToTests(typeof(T), filtersTree, propsToExclude);
-            Func<T, bool> filter = x => tests.All(test => test(x));
-            return list.Where(filter);
+            IEnumerable<T> ret = list;
+            if (filter != null)
+            {
+                IEnumerable<Func<object, bool>> tests = TreeToTests(typeof(T), new Tree(filter), propsToExclude);
+                Func<T, bool> filterFunc = x => tests.All(test => test(x));
+                ret = ret.Where(filterFunc);
+            }
+            return ret;
         }
 
         public Func<object, bool> GetTestForObject(Type type, Tree filter)

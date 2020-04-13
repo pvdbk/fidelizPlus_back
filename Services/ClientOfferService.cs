@@ -8,11 +8,7 @@
     {
         private ClientOfferRepository CoRepo { get; }
 
-        public ClientOfferService(
-            ClientOfferRepository repo,
-            Utils utils,
-            FiltersHandler filtersHandler
-        ) : base(repo, utils, filtersHandler)
+        public ClientOfferService(ClientOfferRepository repo, Utils utils) : base(repo, utils)
         {
             CoRepo = repo;
         }

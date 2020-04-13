@@ -27,7 +27,7 @@ namespace fidelizPlus_back
         {
             try
             {
-                this.Content = XElement.Load(
+                Content = XElement.Load(
                     JsonReaderWriterFactory.CreateJsonReader(
                         Encoding.UTF8.GetBytes(s),
                         new System.Xml.XmlDictionaryReaderQuotas()

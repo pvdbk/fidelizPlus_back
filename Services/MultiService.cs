@@ -55,7 +55,7 @@ namespace fidelizPlus_back.Services
             IEnumerable<ExtendedTraderDTO> ret = traderDTOs.Select(dto => TraderService.ExtendDTO(dto, id));
             if (filter != null)
             {
-                ret = FiltersHandler.Apply(ret, new Tree(filter));
+                ret = Utils.ApplyFilter(ret, filter);
             }
             return ret;
         }
@@ -73,7 +73,7 @@ namespace fidelizPlus_back.Services
             IEnumerable<ExtendedClientDTO> ret = clientDTOs.Select(dto => ClientService.ExtendDTO(dto, id));
             if (filter != null)
             {
-                ret = FiltersHandler.Apply(ret, new Tree(filter));
+                ret = Utils.ApplyFilter(ret, filter);
             }
             return ret;
         }
@@ -128,18 +128,14 @@ namespace fidelizPlus_back.Services
                 throw new AppException("Already payed", 400);
             }
             decimal amount = purchase.Amount;
-            Client client = ClientService.FindEntity(clientId);
-            ClientService.SeekReferences(client);
-            ClientAccount source = client.Account;
+            ClientAccount source = ClientService.GetAccount(clientId);
             if (amount > source.Balance)
             {
                 throw new AppException("Not enough money", 400);
             }
-            PaymentMonitor.Remove(purchaseId);
             PurchaseService.SeekReferences(purchase);
-            Trader trader = TraderService.FindEntity(purchase.CommercialLink.TraderId);
-            TraderService.SeekReferences(trader);
-            TraderAccount target = trader.Account;
+            TraderAccount target = TraderService.GetAccount(purchase.CommercialLink.TraderId);
+            PaymentMonitor.Remove(purchaseId);
             source.Balance -= amount;
             target.Balance += amount;
             purchase.PayingTime = DateTime.Now;

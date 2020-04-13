@@ -14,9 +14,8 @@ namespace fidelizPlus_back.Services
         public CommercialLinkService(
             CommercialLinkRepository repo,
             Utils utils,
-            FiltersHandler filtersHandler,
              RelatedToBothService<Purchase, PurchaseDTO> purchaseService
-        ) : base(repo, utils, filtersHandler)
+        ) : base(repo, utils)
         {
             ClRepo = repo;
             PurchaseService = purchaseService;

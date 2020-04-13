@@ -23,11 +23,10 @@ namespace fidelizPlus_back.Services
         public UserEntityService(
             UserEntityRepository<TEntity, TAccount> repo,
             Utils utils,
-            FiltersHandler filtersHandler,
             CrudService<User, TDTO> userService,
             AccountService<TAccount, TAccountDTO> accountService,
             CommercialLinkService clService
-        ) : base(repo, utils, filtersHandler)
+        ) : base(repo, utils)
         {
             UserService = userService;
             AccountService = accountService;
@@ -119,11 +118,16 @@ namespace fidelizPlus_back.Services
             Repo.Entry(entity).Collection("CommercialLink").Load();
         }
 
-        public TAccountDTO GetAccount(int id)
+        public TAccount GetAccount(int? id)
         {
             TEntity entity = FindEntity(id);
             SeekReferences(entity);
-            return AccountToDTO(entity.Account);
+            return entity.Account;
+        }
+
+        public TAccountDTO GetAccountDTO(int? id)
+        {
+            return AccountToDTO(GetAccount(id));
         }
     }
 }

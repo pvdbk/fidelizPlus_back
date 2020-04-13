@@ -7,17 +7,24 @@ namespace fidelizPlus_back
 {
     public class Utils
     {
-        private readonly IEnumerable<Type> atomicTypes = new Type[] {
-            typeof(bool),
-            typeof(bool?),
-            typeof(int),
-            typeof(int?),
-            typeof(decimal),
-            typeof(decimal?),
-            typeof(string),
-            typeof(DateTime),
-            typeof(DateTime?)
-        };
+        private IEnumerable<Type> AtomicTypes { get; }
+        private FiltersHandler FiltersHandler { get; }
+
+        public Utils()
+        {
+            FiltersHandler = new FiltersHandler(this);
+            AtomicTypes = new Type[] {
+                typeof(bool),
+                typeof(bool?),
+                typeof(int),
+                typeof(int?),
+                typeof(decimal),
+                typeof(decimal?),
+                typeof(string),
+                typeof(DateTime),
+                typeof(DateTime?)
+            };
+        }
 
         public string Quote(string s)
         {
@@ -54,7 +61,7 @@ namespace fidelizPlus_back
 
         public IEnumerable<PropertyInfo> GetAtomicProps<T>()
         {
-            return GetProps<T>().Where(prop => atomicTypes.Contains(prop.PropertyType));
+            return GetProps<T>().Where(prop => AtomicTypes.Contains(prop.PropertyType));
         }
 
         public TTarget Cast<TTarget, TSource>(TSource source) where TTarget : new()
@@ -75,6 +82,25 @@ namespace fidelizPlus_back
                 propsDic[prop.Name].SetValue(ret, prop.GetValue(source));
             }
             return ret;
+        }
+
+        public IEnumerable<TItem> ApplyFilter<TItem, TFiltered>(
+            IEnumerable<TItem> list,
+            string filter,
+            Func<TItem, TFiltered> delegFilter,
+            string[] propsToExclude = null
+        )
+        {
+            return FiltersHandler.Apply(list, filter, delegFilter, propsToExclude);
+        }
+
+        public IEnumerable<T> ApplyFilter<T>(
+            IEnumerable<T> list,
+            string filter,
+            string[] propsToExclude = null
+        )
+        {
+            return FiltersHandler.Apply(list, filter, propsToExclude);
         }
     }
 }

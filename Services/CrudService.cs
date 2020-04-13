@@ -14,21 +14,15 @@ namespace fidelizPlus_back.Services
     {
         public CrudRepository<TEntity> Repo { get; }
         public Utils Utils { get; }
-        public FiltersHandler FiltersHandler { get; }
         public string[] UnexpectedForSaving { get; set; }
         public string[] NotRequiredForSaving { get; set; }
         public string[] UnexpectedForUpdating { get; set; }
         public string[] NotRequiredForUpdating { get; set; }
 
-        public CrudService(
-            CrudRepository<TEntity> repo,
-            Utils utils,
-            FiltersHandler filtersHandler
-        )
+        public CrudService(CrudRepository<TEntity> repo, Utils utils)
         {
             Repo = repo;
             Utils = utils;
-            FiltersHandler = filtersHandler;
             UnexpectedForSaving = new string[0];
             NotRequiredForSaving = new string[0];
             UnexpectedForUpdating = new string[0];
@@ -42,13 +36,8 @@ namespace fidelizPlus_back.Services
 
         public IEnumerable<TDTO> FilterOrFindAll(string filter)
         {
-            IEnumerable<TEntity> entities = Repo.FindAll().ToList();
-            IEnumerable<TDTO> ret = entities.Select(EntityToDTO);
-            if (filter != null)
-            {
-                ret = FiltersHandler.Apply(ret, new Tree(filter));
-            }
-            return entities.Select(EntityToDTO);
+            IEnumerable<TEntity> entities = Repo.FindAll();
+            return Utils.ApplyFilter(entities.Select(EntityToDTO), filter);
         }
 
         public TDTO FindById(int id)

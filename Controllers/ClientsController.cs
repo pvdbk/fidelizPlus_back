@@ -11,14 +11,17 @@ namespace fidelizPlus_back.Controllers
     public class ClientsController : AppController<Client, ClientDTO>
     {
         private ClientService ClientService { get; }
+        private RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
         private MultiService BothService { get; }
 
         public ClientsController(
             ClientService clientService,
+            RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
             MultiService bothService
         ) : base(clientService)
         {
             ClientService = clientService;
+            PurchaseService = purchaseService;
             BothService = bothService;
         }
 
@@ -26,7 +29,14 @@ namespace fidelizPlus_back.Controllers
         [Route("{id}/account")]
         public IActionResult GetAccount(int id)
         {
-            return Ok(ClientService.GetAccount(id));
+            return Ok(ClientService.GetAccountDTO(id));
+        }
+
+        [HttpGet]
+        [Route("{id}/purchases")]
+        public IActionResult Purchases(int id, string filter)
+        {
+            return Ok(ClientService.Purchases(id, filter));
         }
 
         [HttpGet]
