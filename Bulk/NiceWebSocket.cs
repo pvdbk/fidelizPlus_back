@@ -9,7 +9,7 @@ namespace fidelizPlus_back
 {
     public class NiceWebSocket
     {
-        private Task<WebSocket> WebSocket { get; set; }
+        private Task<WebSocket> WebSocket { get; }
 
         public NiceWebSocket(HttpContext context)
         {
@@ -34,35 +34,25 @@ namespace fidelizPlus_back
             return Encoding.UTF8.GetString(buffer);
         }
 
-        public async Task Send(string s)
-        {
-            await (await WebSocket).SendAsync(
-                new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None
-            );
-        }
+        public async Task Send(string s) => await (await WebSocket).SendAsync(
+            new ArraySegment<byte>(Encoding.UTF8.GetBytes(s), 0, s.Length),
+            WebSocketMessageType.Text,
+            true,
+            CancellationToken.None
+        );
 
-        public async Task Close(string s = null)
-        {
-            string statusDescription;
-            WebSocketCloseStatus closeStatus;
-            if (s != null)
-            {
-                statusDescription = s;
-                closeStatus = WebSocketCloseStatus.InvalidMessageType;
-            }
-            else
-            {
-                statusDescription = "All is said";
-                closeStatus = WebSocketCloseStatus.NormalClosure;
-            }
+        public async Task Close(string s) =>
             await (await WebSocket).CloseAsync(
-                closeStatus,
-                statusDescription,
+                WebSocketCloseStatus.NormalClosure,
+                s,
                 CancellationToken.None
             );
-        }
+
+        public async Task Error(string s) =>
+            await (await WebSocket).CloseAsync(
+                WebSocketCloseStatus.InvalidMessageType,
+                s,
+                CancellationToken.None
+            );
     }
 }

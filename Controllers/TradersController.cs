@@ -47,5 +47,13 @@ namespace fidelizPlus_back.Controllers
             (PurchaseDTO dto, int id) = MultiService.SavePurchase(clientId, traderId, amount);
             return Created($"http://{Request.Host}{Request.Path}/{id}", dto);
         }
+
+        [HttpDelete]
+        [Route("{traderId}/purchases/{purchaseId}")]
+        public IActionResult DeletePurchase(int traderId, int purchaseId)
+        {
+            TraderService.DeletePurchase(traderId, purchaseId);
+            return NoContent();
+        }
     }
 }

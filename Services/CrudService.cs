@@ -10,7 +10,7 @@ namespace fidelizPlus_back.Services
 
     public class CrudService<TEntity, TDTO>
         where TEntity : Entity, new()
-        where TDTO : new()
+        where TDTO : class, new()
     {
         public CrudRepository<TEntity> Repo { get; }
         public Utils Utils { get; }
@@ -29,16 +29,22 @@ namespace fidelizPlus_back.Services
             NotRequiredForUpdating = new string[0];
         }
 
+        public IQueryable<TEntity> Entities()
+        {
+            return Repo.FindAll();
+        }
+
         public TEntity FindEntity(int? id)
         {
             return Repo.FindEntity(id);
         }
 
-        public IEnumerable<TDTO> FilterOrFindAll(string filter)
-        {
-            IEnumerable<TEntity> entities = Repo.FindAll();
-            return Utils.ApplyFilter(entities.Select(EntityToDTO), filter);
-        }
+        public IEnumerable<TDTO> FilterOrFindAll(string filter = null) =>
+            Repo
+                .FindAll()
+                .ToList()
+                .Select(EntityToDTO)
+                .Where(Utils.HandleFilter<TDTO>(filter));
 
         public TDTO FindById(int id)
         {

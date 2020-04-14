@@ -11,15 +11,10 @@ namespace fidelizPlus_back
     public class ExceptionHandler
     {
         private RequestDelegate Next { get; }
-        private LogService LogService { get; }
 
-        public ExceptionHandler(RequestDelegate next, LogService logService)
-        {
-            Next = next;
-            LogService = logService;
-        }
+        public ExceptionHandler(RequestDelegate next) => Next = next;
 
-        public async Task Invoke(HttpContext context)
+        public async Task Invoke(HttpContext context, LogService logService)
         {
             try
             {
@@ -33,11 +28,16 @@ namespace fidelizPlus_back
                     string jsonToSend = JsonSerializer.Serialize(e.Content);
                     if (e.Status == 500)
                     {
-                        LogService.AddError(jsonToSend);
+                        logService.AddError(jsonToSend);
                         jsonToSend = "\"Server error\"";
                     }
                     context.Response.ContentType = "application/json";
                     await context.Response.Body.WriteAsync(Encoding.UTF8.GetBytes(jsonToSend));
+                }
+                else
+                {
+                    string jsonToSend = JsonSerializer.Serialize(e.Content);
+                    logService.AddError(jsonToSend);
                 }
             }
             return;

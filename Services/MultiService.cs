@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace fidelizPlus_back.Services
 {
@@ -10,7 +9,6 @@ namespace fidelizPlus_back.Services
     public class MultiService
     {
         private Utils Utils { get; set; }
-        private FiltersHandler FiltersHandler { get; }
         private ClientService ClientService { get; }
         private TraderService TraderService { get; }
         private CommercialLinkService ClService { get; }
@@ -21,7 +19,6 @@ namespace fidelizPlus_back.Services
 
         public MultiService(
             Utils utils,
-            FiltersHandler filtersHandler,
             ClientService clientService,
             TraderService traderService,
             CommercialLinkService clService,
@@ -35,45 +32,48 @@ namespace fidelizPlus_back.Services
             ClService = clService;
             ClientService = clientService;
             TraderService = traderService;
-            FiltersHandler = filtersHandler;
             PurchaseService = purchaseService;
             ClientAccountService = clientAccountService;
             TraderAccountService = traderAccountService;
             PaymentMonitor = paymentMonitor;
         }
 
-        public IEnumerable<ExtendedTraderDTO> TradersForClient(int id, string filter)
+        public IEnumerable<TraderForClients> TradersForClient(int id, string stringFilter)
         {
             Client client = ClientService.FindEntity(id);
             ClientService.CollectCl(client);
+            var ret = new List<TraderForClients>();
+            Func<TraderForClients, bool> funcFilter = Utils.HandleFilter<TraderForClients>(stringFilter);
             foreach (CommercialLink cl in client.CommercialLink)
             {
                 ClService.SeekReferences(cl);
-            }
-            IEnumerable<Trader> traders = client.CommercialLink.Select(cl => cl.Trader);
-            IEnumerable<TraderDTO> traderDTOs = traders.Select(trader => TraderService.EntityToDTO(trader));
-            IEnumerable<ExtendedTraderDTO> ret = traderDTOs.Select(dto => TraderService.ExtendDTO(dto, id));
-            if (filter != null)
-            {
-                ret = Utils.ApplyFilter(ret, filter);
+                TraderDTO traderDTO = TraderService.EntityToDTO(cl.Trader);
+                TraderForClients traderForClient = Utils.Cast<TraderForClients, TraderDTO>(traderDTO);
+                traderForClient.CommercialRelation = ClService.GetClStatus(cl);
+                if (funcFilter(traderForClient))
+                {
+                    ret.Add(traderForClient);
+                }
             }
             return ret;
         }
 
-        public IEnumerable<ExtendedClientDTO> ClientsForTrader(int id, string filter)
+        public IEnumerable<ClientForTraders> ClientsForTrader(int id, string stringFilter)
         {
             Trader trader = TraderService.FindEntity(id);
             TraderService.CollectCl(trader);
+            var ret = new List<ClientForTraders>();
+            Func<ClientForTraders, bool> funcFilter = Utils.HandleFilter<ClientForTraders>(stringFilter);
             foreach (CommercialLink cl in trader.CommercialLink)
             {
                 ClService.SeekReferences(cl);
-            }
-            IEnumerable<Client> clients = trader.CommercialLink.Select(cl => cl.Client);
-            IEnumerable<ClientDTO> clientDTOs = clients.Select(client => ClientService.EntityToDTO(client));
-            IEnumerable<ExtendedClientDTO> ret = clientDTOs.Select(dto => ClientService.ExtendDTO(dto, id));
-            if (filter != null)
-            {
-                ret = Utils.ApplyFilter(ret, filter);
+                ClientDTO clientDTO = ClientService.EntityToDTO(cl.Client);
+                ClientForTraders clientForTrader = Utils.Cast<ClientForTraders, ClientDTO>(clientDTO);
+                clientForTrader.CommercialRelation = ClService.GetClStatus(cl);
+                if (funcFilter(clientForTrader))
+                {
+                    ret.Add(clientForTrader);
+                }
             }
             return ret;
         }
@@ -96,7 +96,7 @@ namespace fidelizPlus_back.Services
             return (cl, client, trader);
         }
 
-        public ExtendedTraderDTO MarkTrader(int clientId, int traderId, bool? bookMark)
+        public TraderForClients MarkTrader(int clientId, int traderId, bool? bookMark)
         {
             if (bookMark == null)
             {
@@ -105,7 +105,10 @@ namespace fidelizPlus_back.Services
             (CommercialLink cl, _, Trader trader) = FindOrCreateCl(clientId, traderId);
             cl.Status = Utils.SetBit(cl.Status, CommercialLink.BOOKMARK, (bool)bookMark);
             ClService.QuickUpdate(cl.Id, cl);
-            return TraderService.ExtendDTO(TraderService.EntityToDTO(trader), clientId);
+            TraderDTO dto = TraderService.EntityToDTO(cl.Trader);
+            TraderForClients extended = Utils.Cast<TraderForClients, TraderDTO>(dto);
+            extended.CommercialRelation = ClService.GetClStatus(cl);
+            return extended;
         }
 
         public (PurchaseDTO, int) SavePurchase(int clientId, int traderId, decimal amount)

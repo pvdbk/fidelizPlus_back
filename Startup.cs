@@ -14,12 +14,12 @@ namespace fidelizPlus_back
 
     public class Startup
     {
+        public IConfiguration Configuration { get; }
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
-
-        public IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -47,36 +47,35 @@ namespace fidelizPlus_back
             });
 
             services.AddSingleton<Utils>();
-            services.AddSingleton<FiltersHandler>();
             services.AddSingleton<BankManager>();
             services.AddSingleton<PaymentMonitor>();
-            services.AddSingleton<LogService>();
+            services.AddScoped<LogService>();
 
-            services.AddTransient<CrudRepository<User>>();
-            services.AddSingleton<CrudService<User, ClientDTO>>();
-            services.AddSingleton<CrudService<User, TraderDTO>>();
+            services.AddScoped<CrudRepository<User>>();
+            services.AddScoped<CrudService<User, ClientDTO>>();
+            services.AddScoped<CrudService<User, TraderDTO>>();
 
-            services.AddTransient<UserEntityRepository<Client, ClientAccount>>();
-            services.AddTransient<CrudRepository<ClientAccount>>();
-            services.AddSingleton<ClientService>();
+            services.AddScoped<UserEntityRepository<Client, ClientAccount>>();
+            services.AddScoped<CrudRepository<ClientAccount>>();
+            services.AddScoped<ClientService>();
 
-            services.AddTransient<UserEntityRepository<Trader, TraderAccount>>();
-            services.AddTransient<CrudRepository<TraderAccount>>();
-            services.AddSingleton<TraderService>();
+            services.AddScoped<UserEntityRepository<Trader, TraderAccount>>();
+            services.AddScoped<CrudRepository<TraderAccount>>();
+            services.AddScoped<TraderService>();
 
-            services.AddTransient<RelatedToBothRepository<Purchase>>();
-            services.AddTransient<RelatedToBothRepository<Comment>>();
-            services.AddTransient<ClientOfferRepository>();
-            services.AddTransient<CommercialLinkRepository>();
-            services.AddTransient<OfferRepository>();
+            services.AddScoped<RelatedToBothRepository<Purchase>>();
+            services.AddScoped<RelatedToBothRepository<Comment>>();
+            services.AddScoped<ClientOfferRepository>();
+            services.AddScoped<CommercialLinkRepository>();
+            services.AddScoped<OfferRepository>();
 
-            services.AddSingleton<AccountService<ClientAccount, ClientAccountDTO>>();
-            services.AddSingleton<AccountService<TraderAccount, TraderAccountDTO>>();
-            services.AddSingleton<CommercialLinkService>();
-            services.AddSingleton<OfferService>();
-            services.AddSingleton<ClientOfferService>();
-            services.AddSingleton<MultiService>();
-            services.AddSingleton<RelatedToBothService<Purchase, PurchaseDTO>>();
+            services.AddScoped<AccountService<ClientAccount, ClientAccountDTO>>();
+            services.AddScoped<AccountService<TraderAccount, TraderAccountDTO>>();
+            services.AddScoped<CommercialLinkService>();
+            services.AddScoped<OfferService>();
+            services.AddScoped<ClientOfferService>();
+            services.AddScoped<MultiService>();
+            services.AddScoped<RelatedToBothService<Purchase, PurchaseDTO>>();
 
             services.AddControllers();
         }
@@ -86,8 +85,6 @@ namespace fidelizPlus_back
             app.UseExceptionHandler();
 
             app.UseWebSockets();
-
-            app.UseHttpsRedirection();
 
             app.UseRouting();
 

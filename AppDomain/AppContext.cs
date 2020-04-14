@@ -4,7 +4,7 @@ namespace fidelizPlus_back.AppDomain
 {
     public partial class AppContext : DbContext
     {
-        public AppContext()
+        public AppContext() : base()
         { }
 
         public AppContext(DbContextOptions<AppContext> options) : base(options)

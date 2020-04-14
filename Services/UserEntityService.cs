@@ -18,6 +18,7 @@ namespace fidelizPlus_back.Services
         public CrudService<User, TDTO> UserService { get; }
         public CrudService<TAccount, TAccountDTO> AccountService { get; }
         public CommercialLinkService ClService { get; }
+        public RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
         public Action<TEntity> SeekReferences { get; }
 
         public UserEntityService(
@@ -25,12 +26,14 @@ namespace fidelizPlus_back.Services
             Utils utils,
             CrudService<User, TDTO> userService,
             AccountService<TAccount, TAccountDTO> accountService,
-            CommercialLinkService clService
+            CommercialLinkService clService,
+            RelatedToBothService<Purchase, PurchaseDTO> purchaseService
         ) : base(repo, utils)
         {
             UserService = userService;
             AccountService = accountService;
             ClService = clService;
+            PurchaseService = purchaseService;
             SeekReferences = repo.SeekReferences;
             UnexpectedForSaving = new string[] { "Id", "CreationTime" };
             UnexpectedForUpdating = new string[] { "Id", "CreationTime" };
@@ -128,6 +131,21 @@ namespace fidelizPlus_back.Services
         public TAccountDTO GetAccountDTO(int? id)
         {
             return AccountToDTO(GetAccount(id));
+        }
+
+        public IEnumerable<PurchaseDTO> Purchases(int id, string stringFilter)
+        {
+            Func<PurchaseDTO, bool> funcFilter = Utils.HandleFilter<PurchaseDTO>(stringFilter);
+            TEntity entity = FindEntity(id);
+            CollectCl(entity);
+            IEnumerable<CommercialLink> cls = entity.CommercialLink;
+            List<Purchase> purchases = new List<Purchase>();
+            foreach (CommercialLink cl in cls)
+            {
+                ClService.CollectPurchases(cl);
+                purchases = purchases.Concat(cl.Purchase).ToList();
+            }
+            return purchases.Select(purchase => PurchaseService.EntityToDTO(purchase));
         }
     }
 }

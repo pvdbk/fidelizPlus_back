@@ -36,6 +36,11 @@ namespace fidelizPlus_back.Services
             ClRepo.SeekReferences(cl);
         }
 
+        public void CollectPurchases(CommercialLink cl)
+        {
+            ClRepo.CollectPurchases(cl);
+        }
+
         public void NullifyClient(int clientId)
         {
             ClRepo.NullifyClient(clientId);
@@ -62,8 +67,7 @@ namespace fidelizPlus_back.Services
 
         public CommercialLink FindWithBoth(int clientId, int traderId)
         {
-            return Repo
-                .FindAll()
+            return Repo.Entities
                 .Where(cl => cl.ClientId == clientId && cl.TraderId == traderId)
                 .FirstOrDefault();
         }

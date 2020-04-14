@@ -26,17 +26,13 @@ namespace fidelizPlus_back
             };
         }
 
-        public string Quote(string s)
-        {
-            return "\"" + s + "\"";
-        }
+        public string Quote(string s) => s == null
+            ? null
+            : "\"" + s + "\"";
 
-        public string FirstToLower(string s)
-        {
-            return s == ""
-                ? ""
-                : s.Substring(0, 1).ToLower() + s.Substring(1);
-        }
+        public string FirstToLower(string s) => s == "" || s == null
+            ? s
+            : s.Substring(0, 1).ToLower() + s.Substring(1);
 
         public int SetBit(int value, int bitPosition, bool valBit)
         {
@@ -44,63 +40,60 @@ namespace fidelizPlus_back
             return valBit ? value | bitMask : value & ~bitMask;
         }
 
-        public bool GetBit(int value, int bitPosition)
-        {
-            return (value & (1 << bitPosition)) != 0;
-        }
+        public bool GetBit(int value, int bitPosition) =>
+            (value & (1 << bitPosition)) != 0;
 
-        public IEnumerable<PropertyInfo> GetProps(Type type)
-        {
-            return type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-        }
+        public IEnumerable<PropertyInfo> GetProps(Type type) =>
+            type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
-        public IEnumerable<PropertyInfo> GetProps<T>()
-        {
-            return GetProps(typeof(T));
-        }
+        public IEnumerable<PropertyInfo> GetProps<T>() => GetProps(typeof(T));
 
-        public IEnumerable<PropertyInfo> GetAtomicProps<T>()
-        {
-            return GetProps<T>().Where(prop => AtomicTypes.Contains(prop.PropertyType));
-        }
+        public IEnumerable<PropertyInfo> GetAtomicProps<T>() => GetProps<T>()
+            .Where(prop => AtomicTypes.Contains(prop.PropertyType));
 
         public TTarget Cast<TTarget, TSource>(TSource source) where TTarget : new()
         {
             TTarget ret = new TTarget();
-            var propsDic = new Dictionary<string, PropertyInfo>();
-            IEnumerable<PropertyInfo> retProps = GetProps<TTarget>();
-            foreach (PropertyInfo prop in retProps)
+            var commonProps = new List<(PropertyInfo, PropertyInfo)>();
+            IEnumerable<PropertyInfo> targetProps = GetProps<TTarget>();
+            IEnumerable<PropertyInfo> sourceProps = GetProps<TSource>();
+            foreach (PropertyInfo targetProp in targetProps)
             {
-                propsDic.Add(prop.Name, prop);
+                PropertyInfo sourceProp = sourceProps
+                    .Where(prop => prop.Name == targetProp.Name && prop.PropertyType == targetProp.PropertyType)
+                    .FirstOrDefault();
+                if (sourceProp != null)
+                {
+                    commonProps.Add((targetProp, sourceProp));
+                }
             }
-            IEnumerable<PropertyInfo> props = GetProps<TSource>().Where(prop =>
-                propsDic.ContainsKey(prop.Name) &&
-                prop.PropertyType == propsDic[prop.Name].PropertyType
-            );
-            foreach (PropertyInfo prop in props)
+            foreach ((PropertyInfo targetProp, PropertyInfo sourceProp) in commonProps)
             {
-                propsDic[prop.Name].SetValue(ret, prop.GetValue(source));
+                targetProp.SetValue(ret, sourceProp.GetValue(source));
             }
             return ret;
         }
 
-        public IEnumerable<TItem> ApplyFilter<TItem, TFiltered>(
-            IEnumerable<TItem> list,
-            string filter,
-            Func<TItem, TFiltered> delegFilter,
-            string[] propsToExclude = null
-        )
+        public Func<T, bool> HandleFilter<T>(string filter) where T : class
         {
-            return FiltersHandler.Apply(list, filter, delegFilter, propsToExclude);
-        }
-
-        public IEnumerable<T> ApplyFilter<T>(
-            IEnumerable<T> list,
-            string filter,
-            string[] propsToExclude = null
-        )
-        {
-            return FiltersHandler.Apply(list, filter, propsToExclude);
+            Func<T, bool> ret = x => true;
+            if (filter != null)
+            {
+                try
+                {
+                    Tree tree = new Tree(filter);
+                    if (tree.Type != "object")
+                    {
+                        throw new AppException("Bad filter parameter, object type expected");
+                    }
+                    ret = FiltersHandler.TreeToTest(tree, typeof(T));
+                }
+                catch (AppException e)
+                {
+                    throw new AppException(e.Content, 400);
+                }
+            }
+            return ret;
         }
     }
 }

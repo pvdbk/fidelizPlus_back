@@ -37,5 +37,10 @@ namespace fidelizPlus_back.Repositories
             Entry(cl).Reference("Client").Load();
             Entry(cl).Reference("Trader").Load();
         }
+
+        public void CollectPurchases(CommercialLink cl)
+        {
+            Entry(cl).Collection("Purchase").Load();
+        }
     }
 }

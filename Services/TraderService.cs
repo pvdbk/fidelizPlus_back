@@ -1,7 +1,4 @@
-﻿using System.Linq;
-using System.Collections.Generic;
-
-namespace fidelizPlus_back.Services
+﻿namespace fidelizPlus_back.Services
 {
     using AppDomain;
     using DTO;
@@ -10,7 +7,6 @@ namespace fidelizPlus_back.Services
     public class TraderService : UserEntityService<Trader, TraderDTO, TraderAccount, TraderAccountDTO>
     {
         private OfferService OfferService { get; }
-        private RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
 
         public TraderService(
             UserEntityRepository<Trader, TraderAccount> repo,
@@ -20,9 +16,8 @@ namespace fidelizPlus_back.Services
             CommercialLinkService clService,
             RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
             OfferService offerService
-        ) : base(repo, utils, userService, accountService, clService)
+        ) : base(repo, utils, userService, accountService, clService, purchaseService)
         {
-            PurchaseService = purchaseService;
             OfferService = offerService;
             NotRequiredForSaving = new string[] { "Address", "Phone", "LogoPath" };
             NotRequiredForUpdating = new string[] { "Address", "Phone", "LogoPath" };
@@ -39,28 +34,16 @@ namespace fidelizPlus_back.Services
             AccountService.Delete(trader.AccountId);
         }
 
-        public ExtendedTraderDTO ExtendDTO(TraderDTO dto, int clientId)
+        public void DeletePurchase(int traderId, int purchaseId)
         {
-            ExtendedTraderDTO ret = null;
-            CommercialLink cl = null;
-            if (dto.Id != null)
+            Trader trader = FindEntity(traderId);
+            Purchase purchase = PurchaseService.FindEntity(purchaseId);
+            PurchaseService.SeekReferences(purchase);
+            if (purchase.CommercialLink.TraderId != traderId)
             {
-                ret = Utils.Cast<ExtendedTraderDTO, TraderDTO>(dto);
-                cl = ClService.FindWithBoth(clientId, (int)dto.Id);
+                throw new AppException("Purchase not found", 404);
             }
-            if (cl == null)
-            {
-                throw new AppException("Bad use of ClientStandardService.ExtendDTO");
-            }
-            ret.CommercialRelation = ClService.GetClStatus(cl);
-            return ret;
-        }
-
-        public IEnumerable<PurchaseDTO> Purchases(int id, string filter)
-        {
-            IEnumerable<PurchaseDTO> ret = PurchaseService.FilterOrFindAll(null).Where(purchase => purchase.TraderId == id);
-            ret = Utils.ApplyFilter(ret, filter);
-            return ret;
+            PurchaseService.Delete(purchaseId);
         }
     }
 }

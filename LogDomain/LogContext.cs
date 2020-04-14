@@ -1,16 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace fidelizPlus_back.LogDomain
 {
     public partial class LogContext : DbContext
     {
-        public LogContext()
+        public LogContext() : base()
         { }
 
-        public LogContext(DbContextOptions<LogContext> options)
-            : base(options)
+        public LogContext(DbContextOptions<LogContext> options) : base(options)
         { }
-
+        
         public virtual DbSet<Error> Error { get; set; }
         public virtual DbSet<Test> Test { get; set; }
 

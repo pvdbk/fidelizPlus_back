@@ -7,11 +7,11 @@ namespace fidelizPlus_back.Controllers
 
     public abstract class AppController<TEntity, TDTO> : ControllerBase
         where TEntity : Entity, new()
-        where TDTO : new()
+        where TDTO : class, new()
     {
         private CrudService<TEntity, TDTO> Service { get; }
 
-        public AppController(CrudService<TEntity, TDTO> service)
+        public AppController(CrudService<TEntity, TDTO> service) : base()
         {
             Service = service;
         }

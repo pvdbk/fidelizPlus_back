@@ -15,17 +15,14 @@ namespace fidelizPlus_back
     {
         private RequestDelegate Next { get; }
         private PaymentMonitor Monitor { get; }
-        private RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
 
         public PaymentHandler(
             RequestDelegate next,
-            PaymentMonitor monitor,
-            RelatedToBothService<Purchase, PurchaseDTO> purchaseService
+            PaymentMonitor monitor
         )
         {
             Next = next;
             Monitor = monitor;
-            PurchaseService = purchaseService;
         }
 
         private bool WaitPayment(int purchaseId)
@@ -75,14 +72,14 @@ namespace fidelizPlus_back
             { }
         }
 
-        private async Task<int> ReadPurchaseId(NiceWebSocket webSocket)
+        private async Task<int> ReadPurchaseId(NiceWebSocket webSocket, RelatedToBothService<Purchase, PurchaseDTO> purchaseService)
         {
             string purchaseIdStr = await webSocket.Read();
             int purchaseId;
             try
             {
                 purchaseId = Int32.Parse(purchaseIdStr);
-                Purchase purchase = PurchaseService.FindEntity(purchaseId);
+                Purchase purchase = purchaseService.FindEntity(purchaseId);
                 if (purchase.PayingTime != null)
                 {
                     throw new AppException("Already payed");
@@ -91,16 +88,16 @@ namespace fidelizPlus_back
             catch (Exception e)
             {
                 object errorObject = e is AppException ? ((AppException)e).Content : "Not a number";
-                await webSocket.Close(JsonSerializer.Serialize(errorObject));
+                await webSocket.Error(JsonSerializer.Serialize(errorObject));
                 throw new AppException(errorObject);
             }
             return purchaseId;
         }
 
-        private async Task HandleWebSocketRequest(HttpContext context)
+        private async Task HandleWebSocketRequest(HttpContext context, RelatedToBothService<Purchase, PurchaseDTO> purchaseService)
         {
             NiceWebSocket webSocket = new NiceWebSocket(context);
-            int purchaseId = await ReadPurchaseId(webSocket);
+            int purchaseId = await ReadPurchaseId(webSocket, purchaseService);
             bool payed = false;
             bool timeout = false;
             Thread waitPayment = new Thread(() =>
@@ -110,21 +107,20 @@ namespace fidelizPlus_back
             });
             Monitor.Add(purchaseId, waitPayment);
             ThreadVsTask(waitPayment, () => webSocket.Read());
-            await webSocket.Send(
+            await webSocket.Close(
                 payed ? "Payed" :
                 timeout ? "Timeout" :
                 "Interrupted"
             );
-            await webSocket.Close();
         }
 
-        public async Task Invoke(HttpContext context)
+        public async Task Invoke(HttpContext context, RelatedToBothService<Purchase, PurchaseDTO> purchaseService)
         {
             if (context.Request.Path == "/ws")
             {
                 if (context.WebSockets.IsWebSocketRequest)
                 {
-                    await HandleWebSocketRequest(context);
+                    await HandleWebSocketRequest(context, purchaseService);
                 }
                 else
                 {
