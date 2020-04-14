@@ -10,9 +10,9 @@ namespace fidelizPlus_back.Repositories
         public UserEntityRepository(AppContext ctxt, Utils utils) : base(ctxt, utils)
         { }
 
-        public override IQueryable<TEntity> FindAll()
+        public override IQueryable<TEntity> Everyone()
         {
-            return base.FindAll().Include(entity => entity.User).Include(entity => entity.Account);
+            return Entities.Include(e => e.User).Include(e => e.Account);
         }
 
         public void SeekReferences(TEntity entity)

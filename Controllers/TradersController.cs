@@ -30,7 +30,7 @@ namespace fidelizPlus_back.Controllers
         [Route("{id}/clients")]
         public IActionResult Clients(int id, string filter)
         {
-            return Ok(MultiService.ClientsForTrader(id, filter));
+            return Ok(MultiService.ClientsForTrader(id, FilterParamToTree(filter)));
         }
 
         [HttpGet]

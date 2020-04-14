@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace fidelizPlus_back.Services
 {
@@ -49,22 +51,25 @@ namespace fidelizPlus_back.Services
         public CommercialRelation GetClStatus(CommercialLink cl)
         {
             SeekReferences(cl);
+            Tree filter = new Tree();
+            filter.Add(new Tree($"{cl.ClientId}", "clientId"));
+            filter.Add(new Tree("null", "payingTime"));
+            IEnumerable<decimal> amounts = PurchaseService
+                    .GetEntities(filter)
+                    .Select(purchase => purchase.Amount);
             return new CommercialRelation()
             {
                 Bookmark = Utils.GetBit(cl.Status, CommercialLink.BOOKMARK),
-                Debt = PurchaseService
-                    .FilterOrFindAll(null)
-                    .Where(purchase => purchase.ClientId == cl.Client.Id && purchase.PayingTime == null)
-                    .Select(purchase => purchase.Amount)
-                    .Aggregate(0m, (x, y) => x + y)
+                Debt = amounts.Aggregate(0m, (x, y) => x + y)
             };
         }
 
         public CommercialLink FindWithBoth(int clientId, int traderId)
         {
+            Tree filterTree = Utils.ToTree(new { clientId, traderId });
+            Func<CommercialLink, bool> filterFunc = Utils.TreeToTest<CommercialLink>(filterTree);
             return Repo
-                .FindAll()
-                .Where(cl => cl.ClientId == clientId && cl.TraderId == traderId)
+                .GetEntities(filterFunc)
                 .FirstOrDefault();
         }
     }

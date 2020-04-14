@@ -77,12 +77,50 @@ namespace fidelizPlus_back.Services
             return ret;
         }
 
+        public Tree ConvertFilter(Tree filterArg)
+        {
+            Tree ret = null;
+            if (filterArg != null)
+            {
+                Tree dtoTree = Utils.ExtractTree<TDTO>(filterArg);
+                Console.WriteLine(dtoTree.Json);
+                ret = Utils.ExtractTree<TEntity>(dtoTree);
+                Tree userTree = Utils.ExtractTree<User>(dtoTree, "user");
+                userTree.Remove("id");
+                ret.Add(userTree);
+                Tree accountTree = filterArg.Get("account");
+                if (accountTree != null)
+                {
+                    accountTree = Utils.ExtractTree<TAccountDTO>(accountTree, "account");
+                    if (accountTree != null)
+                    {
+                        ret.Add(accountTree);
+                    }
+                }
+            }
+            return ret;
+        }
+
+        public override IEnumerable<TEntity> GetEntities(Tree filterArg)
+        {
+            Tree filterTree = ConvertFilter(filterArg);
+            Func<TEntity, bool> filterFunc = Utils.TreeToTest<TEntity>(filterTree);
+            return Repo.GetEntities(filterFunc);
+        }
+
+        private IEnumerable<TEntity> HavingConnectionId(string connectionId)
+        {
+            Tree filterTree = Utils.ToTree(new { connectionId });
+            Func<TEntity, bool> filterFunc = Utils.TreeToTest<TEntity>(filterTree);
+            return Repo.GetEntities(filterFunc);
+        }
+
         public override (TDTO, int) CheckSave(TDTO dto)
         {
             CheckDTOForSaving(dto);
             TAccountDTO accountDTO = dto.Account;
             AccountService.CheckDTOForSaving(accountDTO);
-            if (Repo.FindAll().Any(entity => entity.ConnectionId == dto.ConnectionId))
+            if (HavingConnectionId(dto.ConnectionId).Count() != 0)
             {
                 throw new AppException($"'{dto.ConnectionId}' is already used as connectionId", 400);
             }
@@ -101,7 +139,7 @@ namespace fidelizPlus_back.Services
             SeekReferences(entity);
             dto.Account.Balance = entity.Account.Balance;
             int userId = entity.UserId;
-            if (Repo.FindAll().Any(e => e.ConnectionId == dto.ConnectionId && e.Id != id))
+            if (HavingConnectionId(dto.ConnectionId).Any(e => e.Id != id))
             {
                 throw new AppException($"'{dto.ConnectionId}' is already used as connectionId", 400);
             }

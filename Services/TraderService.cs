@@ -1,5 +1,5 @@
-﻿using System.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace fidelizPlus_back.Services
 {
@@ -56,11 +56,24 @@ namespace fidelizPlus_back.Services
             return ret;
         }
 
-        public IEnumerable<PurchaseDTO> Purchases(int id, string filter)
+        public ExtendedTraderDTO ExtendedDTO(Trader trader, int clientId)
         {
-            IEnumerable<PurchaseDTO> ret = PurchaseService.FilterOrFindAll(null).Where(purchase => purchase.TraderId == id);
-            ret = Utils.ApplyFilter(ret, filter);
-            return ret;
+            return ExtendDTO(EntityToDTO(trader), clientId);
+        }
+
+        public IEnumerable<PurchaseDTO> Purchases(int id, string filterObject)
+        {
+            Tree filterTree = new Tree($"{id}", "traderId");
+            if (filterObject == null)
+            {
+                Tree treeToConcat = Utils.ExtractTree<PurchaseDTO>(filterObject);
+                treeToConcat.Remove("traderId");
+                filterTree = filterTree.Concat(treeToConcat);
+            }
+            IEnumerable<Purchase> purchases = PurchaseService.GetEntities(filterTree);
+            return
+                from purchase in purchases
+                select PurchaseService.EntityToDTO(purchase);
         }
     }
 }

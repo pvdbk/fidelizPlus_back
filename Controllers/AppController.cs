@@ -16,11 +16,32 @@ namespace fidelizPlus_back.Controllers
             Service = service;
         }
 
+        public Tree FilterParamToTree(string s)
+        {
+            Tree ret = null;
+            if (s != null)
+            {
+                try
+                {
+                    ret = new Tree(s);
+                    if (ret.Type != "object")
+                    {
+                        throw new AppException(null);
+                    }
+                }
+                catch (AppException)
+                {
+                    throw new AppException("Bad filter parameter", 400);
+                }
+            }
+            return ret;
+        }
+
         [HttpGet]
         [Route("")]
         public IActionResult FilterOrFindAll(string filter)
         {
-            return Ok(Service.FilterOrFindAll(filter));
+            return Ok(Service.GetDTOs(FilterParamToTree(filter)));
         }
 
         [HttpPost]

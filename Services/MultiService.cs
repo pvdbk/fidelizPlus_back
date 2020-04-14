@@ -42,7 +42,7 @@ namespace fidelizPlus_back.Services
             PaymentMonitor = paymentMonitor;
         }
 
-        public IEnumerable<ExtendedTraderDTO> TradersForClient(int id, string filter)
+        public IEnumerable<ExtendedTraderDTO> TradersForClient(int id, Tree filterArg)
         {
             Client client = ClientService.FindEntity(id);
             ClientService.CollectCl(client);
@@ -50,17 +50,20 @@ namespace fidelizPlus_back.Services
             {
                 ClService.SeekReferences(cl);
             }
-            IEnumerable<Trader> traders = client.CommercialLink.Select(cl => cl.Trader);
-            IEnumerable<TraderDTO> traderDTOs = traders.Select(trader => TraderService.EntityToDTO(trader));
-            IEnumerable<ExtendedTraderDTO> ret = traderDTOs.Select(dto => TraderService.ExtendDTO(dto, id));
-            if (filter != null)
-            {
-                ret = Utils.ApplyFilter(ret, filter);
-            }
+            Tree traderFilterTree = TraderService.ConvertFilter(filterArg);
+            Func<Trader, bool> traderFilterFunc = Utils.TreeToTest<Trader>(traderFilterTree);
+            IEnumerable<Trader> traders = client.CommercialLink
+                .Select(cl => cl.Trader).Where(traderFilterFunc)
+                .ToList();
+            IEnumerable<ExtendedTraderDTO> ret = traders
+                .Select(trader => TraderService.ExtendedDTO(trader, id));
+            Tree crTree = filterArg?.Get("commercialRelation");
+            Func<CommercialRelation, bool> crFilterFunc = Utils.TreeToTest<CommercialRelation>(crTree);
+            ret = ret.Where(dto => crFilterFunc(dto.CommercialRelation));
             return ret;
         }
 
-        public IEnumerable<ExtendedClientDTO> ClientsForTrader(int id, string filter)
+        public IEnumerable<ExtendedClientDTO> ClientsForTrader(int id, Tree filterArg)
         {
             Trader trader = TraderService.FindEntity(id);
             TraderService.CollectCl(trader);
@@ -68,13 +71,15 @@ namespace fidelizPlus_back.Services
             {
                 ClService.SeekReferences(cl);
             }
-            IEnumerable<Client> clients = trader.CommercialLink.Select(cl => cl.Client);
-            IEnumerable<ClientDTO> clientDTOs = clients.Select(client => ClientService.EntityToDTO(client));
-            IEnumerable<ExtendedClientDTO> ret = clientDTOs.Select(dto => ClientService.ExtendDTO(dto, id));
-            if (filter != null)
-            {
-                ret = Utils.ApplyFilter(ret, filter);
-            }
+            Tree clientFilterTree = ClientService.ConvertFilter(filterArg);
+            Func<Client, bool> clientFilterFunc = Utils.TreeToTest<Client>(clientFilterTree);
+            IEnumerable<Client> clients = trader.CommercialLink
+                .Select(cl => cl.Client).Where(clientFilterFunc)
+                .ToList();
+            IEnumerable<ExtendedClientDTO> ret = clients.Select(client => ClientService.ExtendedDTO(client, id));
+            Tree crTree = filterArg?.Get("commercialRelation");
+            Func<CommercialRelation, bool> crFilterFunc = Utils.TreeToTest<CommercialRelation>(crTree);
+            ret = ret.Where(dto => crFilterFunc(dto.CommercialRelation));
             return ret;
         }
 

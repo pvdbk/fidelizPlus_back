@@ -29,22 +29,6 @@ namespace fidelizPlus_back.Services
             NotRequiredForUpdating = new string[0];
         }
 
-        public TEntity FindEntity(int? id)
-        {
-            return Repo.FindEntity(id);
-        }
-
-        public IEnumerable<TDTO> FilterOrFindAll(string filter)
-        {
-            IEnumerable<TEntity> entities = Repo.FindAll();
-            return Utils.ApplyFilter(entities.Select(EntityToDTO), filter);
-        }
-
-        public TDTO FindById(int id)
-        {
-            return EntityToDTO(FindEntity(id));
-        }
-
         public virtual TEntity DTOToEntity(TDTO dto)
         {
             return Utils.Cast<TEntity, TDTO>(dto);
@@ -58,6 +42,28 @@ namespace fidelizPlus_back.Services
         public virtual void Delete(int id)
         {
             Repo.Delete(id);
+        }
+
+        public TEntity FindEntity(int? id)
+        {
+            return Repo.FindEntity(id);
+        }
+
+        public TDTO FindById(int id)
+        {
+            return EntityToDTO(FindEntity(id));
+        }
+
+        public virtual IEnumerable<TEntity> GetEntities(Tree filterArg)
+        {
+            Tree filterTree = Utils.ExtractTree<TEntity, TDTO>(filterArg);
+            Func<TEntity, bool> filterFunc = Utils.TreeToTest<TEntity>(filterTree);
+            return Repo.GetEntities(filterFunc).ToList();
+        }
+
+        public IEnumerable<TDTO> GetDTOs(Tree filter)
+        {
+            return GetEntities(filter).Select(EntityToDTO);
         }
 
         public void CheckDTO(TDTO dto, string[] unexpectedProps, string[] notRequiredProps)

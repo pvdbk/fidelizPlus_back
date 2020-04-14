@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 
 namespace fidelizPlus_back
 {
     public class Utils
     {
         private IEnumerable<Type> AtomicTypes { get; }
-        private FiltersHandler FiltersHandler { get; }
+        public FiltersHandler FiltersHandler { get; }
 
         public Utils()
         {
@@ -28,13 +29,13 @@ namespace fidelizPlus_back
 
         public string Quote(string s)
         {
-            return "\"" + s + "\"";
+            return s == null ? null : "\"" + s + "\"";
         }
 
         public string FirstToLower(string s)
         {
-            return s == ""
-                ? ""
+            return s == "" || s == null
+                ? s
                 : s.Substring(0, 1).ToLower() + s.Substring(1);
         }
 
@@ -67,40 +68,71 @@ namespace fidelizPlus_back
         public TTarget Cast<TTarget, TSource>(TSource source) where TTarget : new()
         {
             TTarget ret = new TTarget();
-            var propsDic = new Dictionary<string, PropertyInfo>();
-            IEnumerable<PropertyInfo> retProps = GetProps<TTarget>();
-            foreach (PropertyInfo prop in retProps)
+            var commonProps = new List<(PropertyInfo, PropertyInfo)>();
+            IEnumerable<PropertyInfo> targetProps = GetProps<TTarget>();
+            IEnumerable<PropertyInfo> sourceProps = GetProps<TSource>();
+            foreach (PropertyInfo targetProp in targetProps)
             {
-                propsDic.Add(prop.Name, prop);
+                PropertyInfo sourceProp = sourceProps
+                    .Where(prop => prop.Name == targetProp.Name && prop.PropertyType == targetProp.PropertyType)
+                    .FirstOrDefault();
+                if (sourceProp != null)
+                {
+                    commonProps.Add((targetProp, sourceProp));
+                }
             }
-            IEnumerable<PropertyInfo> props = GetProps<TSource>().Where(prop =>
-                propsDic.ContainsKey(prop.Name) &&
-                prop.PropertyType == propsDic[prop.Name].PropertyType
-            );
-            foreach (PropertyInfo prop in props)
+            foreach ((PropertyInfo targetProp, PropertyInfo sourceProp) in commonProps)
             {
-                propsDic[prop.Name].SetValue(ret, prop.GetValue(source));
+                targetProp.SetValue(ret, sourceProp.GetValue(source));
             }
             return ret;
         }
 
-        public IEnumerable<TItem> ApplyFilter<TItem, TFiltered>(
-            IEnumerable<TItem> list,
-            string filter,
-            Func<TItem, TFiltered> delegFilter,
-            string[] propsToExclude = null
-        )
+        public Tree ToTree(object o)
         {
-            return FiltersHandler.Apply(list, filter, delegFilter, propsToExclude);
+            return
+                o is null ? null :
+                o is Tree ? (Tree)o :
+                o is string ? new Tree((string)o) :
+                new Tree(JsonSerializer.Serialize(o));
         }
 
-        public IEnumerable<T> ApplyFilter<T>(
-            IEnumerable<T> list,
-            string filter,
-            string[] propsToExclude = null
-        )
+        public Tree ExtractTree<T>(object source, string name = null)
         {
-            return FiltersHandler.Apply(list, filter, propsToExclude);
+            Tree ret = null;
+            if (source != null)
+            {
+                IEnumerable<Tree> childs = ToTree(source).Childs;
+                var childsDic = new Dictionary<string, Tree>();
+                foreach (Tree child in childs)
+                {
+                    childsDic[child.Name] = child;
+                }
+                IEnumerable<Tree> toTake = GetAtomicProps<T>()
+                    .Select(prop => FirstToLower(prop.Name))
+                    .Where(key => childsDic.ContainsKey(key))
+                    .Select(key => childsDic[key]);
+                ret = new Tree();
+                foreach (Tree tree in toTake)
+                {
+                    ret.Add(tree.Copy);
+                }
+                if (name != null)
+                {
+                    ret.Name = name;
+                }
+            }
+            return ret;
+        }
+
+        public Tree ExtractTree<T1, T2>(object source, string name = null)
+        {
+            return ExtractTree<T1>(ExtractTree<T2>(source), name);
+        }
+
+        public Func<T, bool> TreeToTest<T>(Tree tree) where T : class
+        {
+            return tree == null ? x => true : FiltersHandler.TreeToTest(tree, typeof(T));
         }
     }
 }

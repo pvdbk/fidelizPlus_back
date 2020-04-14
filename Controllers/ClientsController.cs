@@ -36,14 +36,14 @@ namespace fidelizPlus_back.Controllers
         [Route("{id}/purchases")]
         public IActionResult Purchases(int id, string filter)
         {
-            return Ok(ClientService.Purchases(id, filter));
+            return Ok(ClientService.Purchases(id, FilterParamToTree(filter)));
         }
 
         [HttpGet]
         [Route("{id}/traders")]
         public IActionResult Traders(int id, string filter)
         {
-            return Ok(BothService.TradersForClient(id, filter));
+            return Ok(BothService.TradersForClient(id, FilterParamToTree(filter)));
         }
 
         [HttpGet]

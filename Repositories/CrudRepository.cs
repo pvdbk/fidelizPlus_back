@@ -13,7 +13,6 @@ namespace fidelizPlus_back.Repositories
     {
         public Func<int> SaveChanges { get; }
         public DbSet<T> Entities { get; }
-        public Utils Utils { get; }
         public Func<object, EntityEntry> Entry { get; }
         public IEnumerable<PropertyInfo> UpdatableProps { get; }
 
@@ -27,7 +26,9 @@ namespace fidelizPlus_back.Repositories
 
         public T FindEntity(int? id)
         {
-            T entity = id == null ? null : Entities.FirstOrDefault(entity => entity.Id == id);
+            T entity =
+                id == null ? null :
+                Entities.FirstOrDefault(entity => entity.Id == id);
             if (entity == null)
             {
                 throw new AppException($"{typeof(T).Name} not found", 404);
@@ -35,9 +36,14 @@ namespace fidelizPlus_back.Repositories
             return entity;
         }
 
-        public virtual IQueryable<T> FindAll()
+        public virtual IQueryable<T> Everyone()
         {
             return Entities;
+        }
+
+        public IEnumerable<T> GetEntities(Func<T, bool> filter)
+        {
+            return Everyone().Where(filter);
         }
 
         public virtual void Save(T entity)
