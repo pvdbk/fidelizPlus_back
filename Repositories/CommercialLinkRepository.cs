@@ -7,7 +7,7 @@ namespace fidelizPlus_back.Repositories
 
     public class CommercialLinkRepository : CrudRepository<CommercialLink>
     {
-        public CommercialLinkRepository(AppContext ctxt, Utils Utils) : base(ctxt, Utils)
+        public CommercialLinkRepository(AppContext ctxt) : base(ctxt)
         { }
 
         public int NullifyClient(int clientId)

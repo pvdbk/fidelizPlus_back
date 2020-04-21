@@ -7,7 +7,7 @@ namespace fidelizPlus_back.Repositories
 
     public class RelatedToBothRepository<T> : CrudRepository<T> where T : RelatedToBoth
     {
-        public RelatedToBothRepository(AppContext ctxt, Utils utils) : base(ctxt, utils)
+        public RelatedToBothRepository(AppContext ctxt) : base(ctxt)
         { }
 
         public int DeleteCommercialLink(int clId)

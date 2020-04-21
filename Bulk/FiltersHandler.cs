@@ -8,9 +8,8 @@ namespace fidelizPlus_back
 {
     public class FiltersHandler
     {
-        private Utils Utils { get; }
-
-        public FiltersHandler(Utils utils) => Utils = utils;
+        public FiltersHandler()
+        { }
 
         private T TypedError<T>() => throw new AppException("Bad filter");
 
@@ -123,16 +122,16 @@ namespace fidelizPlus_back
             {
                 Error();
             }
-            IEnumerable<PropertyInfo> props = Utils.GetProps(filteredType);
+            IEnumerable<PropertyInfo> props = filteredType.GetProps();
             var tests = new List<Func<object, bool>>();
             foreach (PropertyInfo prop in props)
             {
                 string name = prop.Name;
-                Tree filter = filters.Get(Utils.FirstToLower(name));
+                Tree filter = filters.Get(name.FirstToLower());
                 if (filter != null)
                 {
-                    Func<object, bool> propTest = TreeToTest(filter, prop.PropertyType);
-                    tests.Add(toFilter => propTest(prop.GetValue(toFilter)));
+                    Func<object, bool> test = TreeToTest(filter, prop.PropertyType);
+                    tests.Add(toFilter => test(prop.GetValue(toFilter)));
                 }
             }
             return x => tests.All(test => test(x));

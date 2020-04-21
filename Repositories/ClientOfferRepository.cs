@@ -7,7 +7,7 @@ namespace fidelizPlus_back.Repositories
 
     public class ClientOfferRepository : CrudRepository<ClientOffer>
     {
-        public ClientOfferRepository(AppContext ctxt, Utils Utils) : base(ctxt, Utils)
+        public ClientOfferRepository(AppContext ctxt) : base(ctxt)
         { }
 
         public int NullifyClient(int clientId)

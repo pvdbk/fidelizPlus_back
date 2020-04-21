@@ -18,7 +18,7 @@ namespace fidelizPlus_back
         public string Name => Content.Name.ToString();
 
         public int IntValue => _IntValue == null
-            ? new AppException("Unallowed use of the Tree.IntValue method").Cast<int>()
+            ? new AppException("Unallowed use of the Tree.IntValue method").As<int>()
             : (int)_IntValue;
 
         private Tree(XElement content)
@@ -29,7 +29,7 @@ namespace fidelizPlus_back
 
         public IEnumerable<Tree> Childs => Type == "object"
             ? Content.XPathSelectElements("*").Select(x => new Tree(x))
-            : new AppException("Not an object JSON").Cast<IEnumerable<Tree>>();
+            : new AppException("Not an object JSON").As<IEnumerable<Tree>>();
 
         private void CheckKeysUnicity()
         {
@@ -84,7 +84,7 @@ namespace fidelizPlus_back
                         NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
                         new CultureInfo("en-US")
                     ) :
-                    new AppException($"Unhandled type : {type}").Cast<object>();
+                    new AppException($"Unhandled type : {type}").As<object>();
             }
         }
 
@@ -119,17 +119,17 @@ namespace fidelizPlus_back
             {
                 string type = Type;
                 return
-                    type == "string" ? "\"" + (string)Value + "\"" :
+                    type == "string" ? ((string)Value).Quote() :
                     type == "number" ? ((decimal)Value).ToString(new CultureInfo("en-US")) :
                     type == "boolean" ? ((bool)Value ? "true" : "false") :
                     type == "null" ? "null" :
                     type == "object" ?
                         "{" +
                         Childs
-                            .Select(child => "\"" + child.Name + "\":" + child.Json)
+                            .Select(child => child.Name.Quote() + ":" + child.Json)
                             .Aggregate("", (x, y) => x == "" ? y : x + "," + y)
                         + "}" :
-                    new AppException($"Unhandled type : {type}").Cast<string>();
+                    new AppException($"Unhandled type : {type}").As<string>();
             }
         }
     }

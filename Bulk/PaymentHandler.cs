@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Text.Json;
 using System.Threading;
@@ -131,14 +130,6 @@ namespace fidelizPlus_back
             {
                 await Next(context);
             }
-        }
-    }
-
-    public static class PaymentHandlerExtensions
-    {
-        public static IApplicationBuilder UsePaymentHandler(this IApplicationBuilder builder)
-        {
-            return builder.UseMiddleware<PaymentHandler>();
         }
     }
 }

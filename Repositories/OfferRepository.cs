@@ -7,7 +7,7 @@ namespace fidelizPlus_back.Repositories
 
     public class OfferRepository : CrudRepository<Offer>
     {
-        public OfferRepository(AppContext ctxt, Utils utils) : base(ctxt, utils)
+        public OfferRepository(AppContext ctxt) : base(ctxt)
         { }
 
         public int NullifyTrader(int traderId)

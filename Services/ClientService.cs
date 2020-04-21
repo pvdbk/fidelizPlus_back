@@ -10,13 +10,12 @@
 
         public ClientService(
             UserEntityRepository<Client, ClientAccount> repo,
-            Utils utils,
             CrudService<User, ClientDTO> userService,
             AccountService<ClientAccount, ClientAccountDTO> accountService,
             CommercialLinkService clService,
             RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
             ClientOfferService clientOfferService
-        ) : base(repo, utils, userService, accountService, clService, purchaseService)
+        ) : base(repo, userService, accountService, clService, purchaseService)
         {
             ClientOfferService = clientOfferService;
             NotRequiredForSaving = new string[] { "AdminPassword" };

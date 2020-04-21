@@ -8,7 +8,7 @@
     {
         private OfferRepository OfferRepo { get; }
 
-        public OfferService(OfferRepository repo, Utils utils) : base(repo, utils)
+        public OfferService(OfferRepository repo) : base(repo)
         {
             OfferRepo = repo;
         }

@@ -58,7 +58,6 @@ namespace fidelizPlus_back
                 options.Cookie.IsEssential = true;
             });
 
-            services.AddSingleton<Utils>();
             services.AddSingleton<BankManager>();
             services.AddSingleton<PaymentMonitor>();
             services.AddScoped<LogService>();

@@ -13,16 +13,14 @@ namespace fidelizPlus_back.Services
         where TDTO : class, new()
     {
         public CrudRepository<TEntity> Repo { get; }
-        public Utils Utils { get; }
         public string[] UnexpectedForSaving { get; set; }
         public string[] NotRequiredForSaving { get; set; }
         public string[] UnexpectedForUpdating { get; set; }
         public string[] NotRequiredForUpdating { get; set; }
 
-        public CrudService(CrudRepository<TEntity> repo, Utils utils)
+        public CrudService(CrudRepository<TEntity> repo)
         {
             Repo = repo;
-            Utils = utils;
             UnexpectedForSaving = new string[0];
             NotRequiredForSaving = new string[0];
             UnexpectedForUpdating = new string[0];
@@ -44,7 +42,7 @@ namespace fidelizPlus_back.Services
                 .FindAll()
                 .ToList()
                 .Select(EntityToDTO)
-                .Where(Utils.HandleFilter<TDTO>(filter));
+                .Where(filter.ToTest<TDTO>());
 
         public TDTO FindById(int id)
         {
@@ -53,12 +51,12 @@ namespace fidelizPlus_back.Services
 
         public virtual TEntity DTOToEntity(TDTO dto)
         {
-            return Utils.Cast<TEntity, TDTO>(dto);
+            return dto.CastAs<TEntity>();
         }
 
         public virtual TDTO EntityToDTO(TEntity entity)
         {
-            return Utils.Cast<TDTO, TEntity>(entity);
+            return entity.CastAs<TDTO>();
         }
 
         public virtual void Delete(int id)
@@ -68,7 +66,7 @@ namespace fidelizPlus_back.Services
 
         public void CheckDTO(TDTO dto, string[] unexpectedProps, string[] notRequiredProps)
         {
-            IEnumerable<PropertyInfo> propsToLook = Utils.GetProps<TDTO>().Where(prop =>
+            IEnumerable<PropertyInfo> propsToLook = typeof(TDTO).GetProps().Where(prop =>
                 prop.GetValue(dto) == null ^
                 unexpectedProps.Contains(prop.Name)
             );
@@ -78,11 +76,11 @@ namespace fidelizPlus_back.Services
             {
                 if (prop.GetValue(dto) != null)
                 {
-                    unexpected.Add(Utils.FirstToLower(prop.Name));
+                    unexpected.Add(prop.Name.FirstToLower());
                 }
                 else if (!notRequiredProps.Contains(prop.Name))
                 {
-                    missing.Add(Utils.FirstToLower(prop.Name));
+                    missing.Add(prop.Name.FirstToLower());
                 }
             }
             int errorCode = 0;

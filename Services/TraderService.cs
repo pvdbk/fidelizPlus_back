@@ -10,13 +10,12 @@
 
         public TraderService(
             UserEntityRepository<Trader, TraderAccount> repo,
-            Utils utils,
             CrudService<User, TraderDTO> userService,
             AccountService<TraderAccount, TraderAccountDTO> accountService,
             CommercialLinkService clService,
             RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
             OfferService offerService
-        ) : base(repo, utils, userService, accountService, clService, purchaseService)
+        ) : base(repo, userService, accountService, clService, purchaseService)
         {
             OfferService = offerService;
             NotRequiredForSaving = new string[] { "Address", "Phone", "LogoPath" };

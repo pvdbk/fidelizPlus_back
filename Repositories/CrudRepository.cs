@@ -13,16 +13,15 @@ namespace fidelizPlus_back.Repositories
     {
         public Func<int> SaveChanges { get; }
         public DbSet<T> Entities { get; }
-        public Utils Utils { get; }
         public Func<object, EntityEntry> Entry { get; }
         public IEnumerable<PropertyInfo> UpdatableProps { get; }
 
-        public CrudRepository(AppContext ctxt, Utils utils)
+        public CrudRepository(AppContext ctxt)
         {
             SaveChanges = ctxt.SaveChanges;
             Entities = ctxt.Set<T>();
             Entry = ctxt.Entry;
-            UpdatableProps = utils.GetAtomicProps<T>();
+            UpdatableProps = typeof(T).GetAtomicProps();
         }
 
         public T FindEntity(int? id)

@@ -12,7 +12,7 @@ namespace fidelizPlus_back.Services
     {
         public Action<TEntity> SeekReferences { get; }
 
-        public RelatedToBothService(RelatedToBothRepository<TEntity> repo, Utils utils) : base(repo, utils)
+        public RelatedToBothService(RelatedToBothRepository<TEntity> repo) : base(repo)
         {
             SeekReferences = repo.SeekReferences;
         }

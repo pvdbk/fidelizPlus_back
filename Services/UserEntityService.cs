@@ -23,12 +23,11 @@ namespace fidelizPlus_back.Services
 
         public UserEntityService(
             UserEntityRepository<TEntity, TAccount> repo,
-            Utils utils,
             CrudService<User, TDTO> userService,
             AccountService<TAccount, TAccountDTO> accountService,
             CommercialLinkService clService,
             RelatedToBothService<Purchase, PurchaseDTO> purchaseService
-        ) : base(repo, utils)
+        ) : base(repo)
         {
             UserService = userService;
             AccountService = accountService;
@@ -51,10 +50,10 @@ namespace fidelizPlus_back.Services
 
         public TEntity DTOToUserEntity(TDTO dto, int userId, int accountId)
         {
-            TEntity entity = Utils.Cast<TEntity, TDTO>(dto);
-            entity.UserId = userId;
-            entity.AccountId = accountId;
-            return entity;
+            TEntity ret = dto.CastAs<TEntity>();
+            ret.UserId = userId;
+            ret.AccountId = accountId;
+            return ret;
         }
 
         public override TDTO EntityToDTO(TEntity entity)
@@ -65,7 +64,7 @@ namespace fidelizPlus_back.Services
             }
             TDTO ret = base.EntityToDTO(entity);
             TDTO toMergeWithRet = UserService.EntityToDTO(entity.User);
-            IEnumerable<PropertyInfo> props = Utils.GetProps<TDTO>();
+            IEnumerable<PropertyInfo> props = typeof(TDTO).GetProps();
             foreach (PropertyInfo prop in props)
             {
                 object value = prop.GetValue(toMergeWithRet);
@@ -133,19 +132,22 @@ namespace fidelizPlus_back.Services
             return AccountToDTO(GetAccount(id));
         }
 
-        public IEnumerable<PurchaseDTO> Purchases(int id, string stringFilter)
+        public IEnumerable<PurchaseDTO> Purchases(int id, string filter)
         {
-            Func<PurchaseDTO, bool> funcFilter = Utils.HandleFilter<PurchaseDTO>(stringFilter);
+            Func<PurchaseDTO, bool> test = filter.ToTest<PurchaseDTO>();
             TEntity entity = FindEntity(id);
             CollectCl(entity);
             IEnumerable<CommercialLink> cls = entity.CommercialLink;
-            List<Purchase> purchases = new List<Purchase>();
+            var ret = new List<PurchaseDTO>();
             foreach (CommercialLink cl in cls)
             {
                 ClService.CollectPurchases(cl);
-                purchases = purchases.Concat(cl.Purchase).ToList();
+                IEnumerable<PurchaseDTO> toAdd = cl.Purchase
+                    .Select(purchase => PurchaseService.EntityToDTO(purchase))
+                    .Where(test);
+                ret = ret.Concat(toAdd).ToList();
             }
-            return purchases.Select(purchase => PurchaseService.EntityToDTO(purchase));
+            return ret;
         }
     }
 }

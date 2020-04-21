@@ -7,7 +7,7 @@ namespace fidelizPlus_back.Repositories
 
     public class UserEntityRepository<TEntity, TAccount> : CrudRepository<TEntity> where TEntity : UserEntity<TAccount>
     {
-        public UserEntityRepository(AppContext ctxt, Utils utils) : base(ctxt, utils)
+        public UserEntityRepository(AppContext ctxt) : base(ctxt)
         { }
 
         public override IQueryable<TEntity> FindAll()

@@ -8,7 +8,6 @@ namespace fidelizPlus_back.Services
 
     public class MultiService
     {
-        private Utils Utils { get; set; }
         private ClientService ClientService { get; }
         private TraderService TraderService { get; }
         private CommercialLinkService ClService { get; }
@@ -18,7 +17,6 @@ namespace fidelizPlus_back.Services
         private PaymentMonitor PaymentMonitor { get; }
 
         public MultiService(
-            Utils utils,
             ClientService clientService,
             TraderService traderService,
             CommercialLinkService clService,
@@ -28,7 +26,6 @@ namespace fidelizPlus_back.Services
             PaymentMonitor paymentMonitor
         )
         {
-            Utils = utils;
             ClService = clService;
             ClientService = clientService;
             TraderService = traderService;
@@ -38,19 +35,19 @@ namespace fidelizPlus_back.Services
             PaymentMonitor = paymentMonitor;
         }
 
-        public IEnumerable<TraderForClients> TradersForClient(int id, string stringFilter)
+        public IEnumerable<TraderForClients> TradersForClient(int id, string filter)
         {
             Client client = ClientService.FindEntity(id);
             ClientService.CollectCl(client);
             var ret = new List<TraderForClients>();
-            Func<TraderForClients, bool> funcFilter = Utils.HandleFilter<TraderForClients>(stringFilter);
+            Func<TraderForClients, bool> test = filter.ToTest<TraderForClients>();
             foreach (CommercialLink cl in client.CommercialLink)
             {
                 ClService.SeekReferences(cl);
                 TraderDTO traderDTO = TraderService.EntityToDTO(cl.Trader);
-                TraderForClients traderForClient = Utils.Cast<TraderForClients, TraderDTO>(traderDTO);
+                TraderForClients traderForClient = traderDTO.CastAs<TraderForClients>();
                 traderForClient.CommercialRelation = ClService.GetClStatus(cl);
-                if (funcFilter(traderForClient))
+                if (test(traderForClient))
                 {
                     ret.Add(traderForClient);
                 }
@@ -58,19 +55,19 @@ namespace fidelizPlus_back.Services
             return ret;
         }
 
-        public IEnumerable<ClientForTraders> ClientsForTrader(int id, string stringFilter)
+        public IEnumerable<ClientForTraders> ClientsForTrader(int id, string filter)
         {
             Trader trader = TraderService.FindEntity(id);
             TraderService.CollectCl(trader);
             var ret = new List<ClientForTraders>();
-            Func<ClientForTraders, bool> funcFilter = Utils.HandleFilter<ClientForTraders>(stringFilter);
+            Func<ClientForTraders, bool> test = filter.ToTest<ClientForTraders>();
             foreach (CommercialLink cl in trader.CommercialLink)
             {
                 ClService.SeekReferences(cl);
                 ClientDTO clientDTO = ClientService.EntityToDTO(cl.Client);
-                ClientForTraders clientForTrader = Utils.Cast<ClientForTraders, ClientDTO>(clientDTO);
+                ClientForTraders clientForTrader = clientDTO.CastAs<ClientForTraders>();
                 clientForTrader.CommercialRelation = ClService.GetClStatus(cl);
-                if (funcFilter(clientForTrader))
+                if (test(clientForTrader))
                 {
                     ret.Add(clientForTrader);
                 }
@@ -103,10 +100,10 @@ namespace fidelizPlus_back.Services
                 throw new AppException("Missing parameters", 400);
             }
             (CommercialLink cl, _, Trader trader) = FindOrCreateCl(clientId, traderId);
-            cl.Status = Utils.SetBit(cl.Status, CommercialLink.BOOKMARK, (bool)bookMark);
+            cl.Status = cl.Status.SetBit(CommercialLink.BOOKMARK, (bool)bookMark);
             ClService.QuickUpdate(cl.Id, cl);
             TraderDTO dto = TraderService.EntityToDTO(cl.Trader);
-            TraderForClients extended = Utils.Cast<TraderForClients, TraderDTO>(dto);
+            TraderForClients extended = dto.CastAs<TraderForClients>();
             extended.CommercialRelation = ClService.GetClStatus(cl);
             return extended;
         }

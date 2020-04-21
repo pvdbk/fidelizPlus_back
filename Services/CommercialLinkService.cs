@@ -13,9 +13,8 @@ namespace fidelizPlus_back.Services
 
         public CommercialLinkService(
             CommercialLinkRepository repo,
-            Utils utils,
              RelatedToBothService<Purchase, PurchaseDTO> purchaseService
-        ) : base(repo, utils)
+        ) : base(repo)
         {
             ClRepo = repo;
             PurchaseService = purchaseService;
@@ -56,7 +55,7 @@ namespace fidelizPlus_back.Services
             SeekReferences(cl);
             return new CommercialRelation()
             {
-                Bookmark = Utils.GetBit(cl.Status, CommercialLink.BOOKMARK),
+                Bookmark = cl.Status.GetBit(CommercialLink.BOOKMARK),
                 Debt = PurchaseService
                     .FilterOrFindAll(null)
                     .Where(purchase => purchase.ClientId == cl.Client.Id && purchase.PayingTime == null)
