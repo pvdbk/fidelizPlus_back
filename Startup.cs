@@ -15,6 +15,7 @@ namespace fidelizPlus_back
     public class Startup
     {
         public IConfiguration Configuration { get; }
+        private string MyAllowSpecificOrigins => "myAllowSpecificOrigins";
 
         public Startup(IConfiguration configuration)
         {
@@ -23,6 +24,17 @@ namespace fidelizPlus_back
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddPolicy(
+                    name: MyAllowSpecificOrigins,
+                    builder =>
+                    {
+                        builder.WithOrigins("http://localhost:3000");
+                    }
+                );
+            });
+
             services.AddDbContext<AppContext>(options =>
             {
                 options.UseMySql(
@@ -87,6 +99,8 @@ namespace fidelizPlus_back
             app.UseWebSockets();
 
             app.UseRouting();
+
+            app.UseCors(MyAllowSpecificOrigins);
 
             app.UseAuthorization();
 
