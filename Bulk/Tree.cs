@@ -13,18 +13,12 @@ namespace fidelizPlus_back
     {
         private XElement Content { get; }
         public string Type => Content.Attribute("type").Value;
-        private int? _IntValue { get; set; }
 
         public string Name => Content.Name.ToString();
-
-        public int IntValue => _IntValue == null
-            ? new AppException("Unallowed use of the Tree.IntValue method").As<int>()
-            : (int)_IntValue;
 
         private Tree(XElement content)
         {
             Content = content;
-            _IntValue = null;
         }
 
         public IEnumerable<Tree> Childs => Type == "object"
@@ -59,32 +53,47 @@ namespace fidelizPlus_back
                         new System.Xml.XmlDictionaryReaderQuotas()
                     )
                 );
-                _IntValue = null;
                 CheckKeysUnicity();
             }
             catch
             {
-                throw new AppException("Bad Json");
+                throw new AppException($"Bad Json: {json}");
             }
         }
 
-        public object Value
+        public string StringValue => Type == "string"
+            ? Content.Value
+            : new AppException("Not a string").As<string>();
+
+        public bool BoolValue => Type == "boolean"
+            ? Content.Value == "true"
+            : new AppException("Not a boolean").As<bool>();
+
+        public decimal DecimalValue => Type == "number"
+            ? Decimal.Parse(
+                Content.Value,
+                NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
+                new CultureInfo("en-US")
+            )
+            : new AppException("Not a number").As<decimal>();
+
+        public int IntValue
         {
             get
             {
-                string type = Type;
-                string value = Content.Value;
-                return
-                    type == "object" ? this :
-                    type == "string" ? value :
-                    type == "boolean" ? value == "true" :
-                    type == "null" ? null :
-                    type == "number" ? Decimal.Parse(
-                        value,
-                        NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
-                        new CultureInfo("en-US")
-                    ) :
-                    new AppException($"Unhandled type : {type}").As<object>();
+                int? ret = null;
+                if (Type == "number")
+                {
+                    decimal d = DecimalValue;
+                    decimal x = (int)d;
+                    if ((int)(1000 * (d - x)) == 0)
+                    {
+                        ret = (int)d;
+                    }
+                }
+                return ret != null
+                    ? (int)ret
+                    : new AppException("Not an integer").As<int>();
             }
         }
 
@@ -94,34 +103,15 @@ namespace fidelizPlus_back
             return xelt == null ? null : new Tree(xelt);
         }
 
-        public bool IsInteger
-        {
-            get
-            {
-                bool ret = false;
-                if (Type == "number")
-                {
-                    decimal d = (decimal)Value;
-                    decimal x = (int)d;
-                    ret = (int)(1000 * (d - x)) == 0;
-                    if (ret)
-                    {
-                        _IntValue = (int)d;
-                    }
-                }
-                return ret;
-            }
-        }
-
         public string Json
         {
             get
             {
                 string type = Type;
                 return
-                    type == "string" ? ((string)Value).Quote() :
-                    type == "number" ? ((decimal)Value).ToString(new CultureInfo("en-US")) :
-                    type == "boolean" ? ((bool)Value ? "true" : "false") :
+                    type == "string" ? StringValue.Quote() :
+                    type == "number" ? DecimalValue.ToString(new CultureInfo("en-US")) :
+                    type == "boolean" ? (BoolValue ? "true" : "false") :
                     type == "null" ? "null" :
                     type == "object" ?
                         "{" +

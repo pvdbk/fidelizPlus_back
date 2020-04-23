@@ -29,7 +29,7 @@ namespace fidelizPlus_back.Repositories
             T entity = id == null ? null : Entities.FirstOrDefault(entity => entity.Id == id);
             if (entity == null)
             {
-                throw new AppException($"{typeof(T).Name} not found", 404);
+                throw new AppException($"{typeof(T).Name} not found");
             }
             return entity;
         }

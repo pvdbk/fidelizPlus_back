@@ -7,13 +7,11 @@ namespace fidelizPlus_back
     public class AccountManager<T> where T : Account
     {
         private T Account { get; }
-        private BankManager BankManager { get; }
         private string AccountString { get; }
 
-        public AccountManager(T account, BankManager bankManager)
+        public AccountManager(T account)
         {
             Account = account;
-            BankManager = bankManager;
             dynamic acnt = account;
             AccountString = account is ClientAccount ? acnt.ExternalAccount : acnt.Gni;
         }

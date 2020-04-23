@@ -53,13 +53,14 @@ namespace fidelizPlus_back
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
             {
-                options.IdleTimeout = TimeSpan.FromMinutes(1);
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
+                options.Cookie.Name = "sessionId";
             });
 
-            services.AddSingleton<BankManager>();
             services.AddSingleton<PaymentMonitor>();
+            services.AddScoped<Credentials>();
             services.AddScoped<LogService>();
 
             services.AddScoped<CrudRepository<User>>();
@@ -103,7 +104,11 @@ namespace fidelizPlus_back
 
             app.UseAuthorization();
 
+            app.UseSession();
+
             app.UsePaymentHandler();
+
+            app.UseSessionHandler();
 
             app.UseEndpoints(endpoints =>
             {

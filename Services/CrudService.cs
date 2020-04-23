@@ -34,7 +34,14 @@ namespace fidelizPlus_back.Services
 
         public TEntity FindEntity(int? id)
         {
-            return Repo.FindEntity(id);
+            try
+            {
+                return Repo.FindEntity(id);
+            }
+            catch (AppException e)
+            {
+                throw new AppException(e.Content, 404);
+            }
         }
 
         public IEnumerable<TDTO> FilterOrFindAll(string filter = null) =>
@@ -61,7 +68,14 @@ namespace fidelizPlus_back.Services
 
         public virtual void Delete(int id)
         {
-            Repo.Delete(id);
+            try
+            {
+                Repo.Delete(id);
+            }
+            catch (AppException e)
+            {
+                throw new AppException(e.Content, 404);
+            }
         }
 
         public void CheckDTO(TDTO dto, string[] unexpectedProps, string[] notRequiredProps)

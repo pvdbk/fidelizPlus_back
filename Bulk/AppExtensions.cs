@@ -33,6 +33,18 @@ namespace fidelizPlus_back
 
         public static string ToJson(this object o) => JsonSerializer.Serialize(o);
 
+        public static int ToInt(this string s)
+        {
+            int ret = 0;
+            try
+            {
+                ret = Int32.Parse(s);
+            }
+            catch
+            { }
+            return ret;
+        }
+
         public static int SetBit(this int value, int bitPosition, bool valBit)
         {
             int bitMask = 1 << bitPosition;
@@ -88,14 +100,13 @@ namespace fidelizPlus_back
             }
         }
 
-        public static IApplicationBuilder UseExceptionHandler(this IApplicationBuilder builder)
-        {
-            return builder.UseMiddleware<ExceptionHandler>();
-        }
+        public static IApplicationBuilder UseExceptionHandler(this IApplicationBuilder builder) =>
+            builder.UseMiddleware<ExceptionHandler>();
 
-        public static IApplicationBuilder UsePaymentHandler(this IApplicationBuilder builder)
-        {
-            return builder.UseMiddleware<PaymentHandler>();
-        }
+        public static IApplicationBuilder UsePaymentHandler(this IApplicationBuilder builder) =>
+            builder.UseMiddleware<PaymentHandler>();
+
+        public static IApplicationBuilder UseSessionHandler(this IApplicationBuilder builder) =>
+            builder.UseMiddleware<SessionHandler>();
     }
 }
