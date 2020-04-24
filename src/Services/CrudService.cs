@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Microsoft.AspNetCore.Http;
 
 namespace fidelizPlus_back.Services
 {
@@ -27,10 +28,7 @@ namespace fidelizPlus_back.Services
             NotRequiredForUpdating = new string[0];
         }
 
-        public IQueryable<TEntity> Entities()
-        {
-            return Repo.FindAll();
-        }
+        public IQueryable<TEntity> Entities => Repo.Entities;
 
         public TEntity FindEntity(int? id)
         {
@@ -44,39 +42,11 @@ namespace fidelizPlus_back.Services
             }
         }
 
-        public IEnumerable<TDTO> FilterOrFindAll(string filter = null) =>
-            Repo
-                .FindAll()
-                .ToList()
-                .Select(EntityToDTO)
-                .Where(filter.ToTest<TDTO>());
+        public virtual TEntity DTOToEntity(TDTO dto) => dto.CastAs<TEntity>();
 
-        public TDTO FindById(int id)
-        {
-            return EntityToDTO(FindEntity(id));
-        }
+        public virtual TDTO EntityToDTO(TEntity entity) => entity.CastAs<TDTO>();
 
-        public virtual TEntity DTOToEntity(TDTO dto)
-        {
-            return dto.CastAs<TEntity>();
-        }
-
-        public virtual TDTO EntityToDTO(TEntity entity)
-        {
-            return entity.CastAs<TDTO>();
-        }
-
-        public virtual void Delete(int id)
-        {
-            try
-            {
-                Repo.Delete(id);
-            }
-            catch (AppException e)
-            {
-                throw new AppException(e.Content, 404);
-            }
-        }
+        public virtual void Delete(int id) => Repo.Delete(id);
 
         public void CheckDTO(TDTO dto, string[] unexpectedProps, string[] notRequiredProps)
         {
@@ -111,10 +81,7 @@ namespace fidelizPlus_back.Services
             }
         }
 
-        public void CheckDTOForSaving(TDTO dto)
-        {
-            CheckDTO(dto, UnexpectedForSaving, NotRequiredForSaving);
-        }
+        public void CheckDTOForSaving(TDTO dto) => CheckDTO(dto, UnexpectedForSaving, NotRequiredForSaving);
 
         public TEntity Save(TEntity entity)
         {
@@ -122,27 +89,11 @@ namespace fidelizPlus_back.Services
             return entity;
         }
 
-        public TEntity QuickSave(TDTO dto)
-        {
-            return Save(DTOToEntity(dto));
-        }
+        public TEntity QuickSave(TDTO dto) => Save(DTOToEntity(dto));
 
-        public virtual (TDTO, int) CheckSave(TDTO dto)
-        {
-            CheckDTOForSaving(dto);
-            TEntity entity = QuickSave(dto);
-            return (EntityToDTO(entity), entity.Id);
-        }
+        public void CheckDTOForUpdating(TDTO dto) => CheckDTO(dto, UnexpectedForUpdating, NotRequiredForUpdating);
 
-        public void CheckDTOForUpdating(TDTO dto)
-        {
-            CheckDTO(dto, UnexpectedForUpdating, NotRequiredForUpdating);
-        }
-
-        public TEntity Update(TEntity entity)
-        {
-            return Repo.Update(entity);
-        }
+        public TEntity Update(TEntity entity) => Repo.Update(entity);
 
         public TEntity QuickUpdate(int id, TDTO dto)
         {
@@ -151,10 +102,9 @@ namespace fidelizPlus_back.Services
             return Update(entity);
         }
 
-        public virtual TDTO CheckUpdate(int id, TDTO dto)
+        public virtual TDTO CheckUpdate(int id, TDTO dto, HttpContext ctxt)
         {
             CheckDTOForUpdating(dto);
-            FindEntity(id);
             return EntityToDTO(QuickUpdate(id, dto));
         }
     }

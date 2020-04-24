@@ -2,19 +2,21 @@
 {
     using AppDomain;
     using Repositories;
+    using Identification;
 
-    public class ClientService : UserEntityService<Client, ClientDTO, ClientAccount, ClientAccountDTO>
+    public class ClientService : UserEntityService<Client, PrivateClient, PublicClient, ClientAccount, ClientAccountDTO>
     {
         private ClientOfferService ClientOfferService { get; }
 
         public ClientService(
             UserEntityRepository<Client, ClientAccount> repo,
-            CrudService<User, ClientDTO> userService,
+            CrudService<User, PrivateClient> userService,
             AccountService<ClientAccount, ClientAccountDTO> accountService,
             CommercialLinkService clService,
             RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
+            Credentials credentials,
             ClientOfferService clientOfferService
-        ) : base(repo, userService, accountService, clService, purchaseService)
+        ) : base(repo, userService, accountService, clService, purchaseService, credentials)
         {
             ClientOfferService = clientOfferService;
             NotRequiredForSaving = new string[] { "AdminPassword" };
@@ -23,8 +25,8 @@
 
         public override void Delete(int id)
         {
+            CheckCredentials(id);
             Client client = FindEntity(id);
-            SeekReferences(client);
             ClService.NullifyClient(id);
             ClientOfferService.NullifyClient(id);
             Repo.Delete(id);

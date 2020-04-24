@@ -22,8 +22,11 @@ namespace fidelizPlus_back
         }
 
         public IEnumerable<Tree> Childs => Type == "object"
-            ? Content.XPathSelectElements("*").Select(x => new Tree(x))
-            : new AppException("Not an object JSON").As<IEnumerable<Tree>>();
+            ? Content
+                .XPathSelectElements("*")
+                .Select(x => new Tree(x))
+                .ToList()
+            : new AppException("Not an object JSON").Throw<IEnumerable<Tree>>();
 
         private void CheckKeysUnicity()
         {
@@ -35,11 +38,9 @@ namespace fidelizPlus_back
                 {
                     throw new Exception();
                 }
-                trees = trees.Where(t => t.Type == "object");
-                foreach (Tree tree in trees)
-                {
-                    tree.CheckKeysUnicity();
-                }
+                trees
+                    .Where(t => t.Type == "object")
+                    .ForEach(tree => tree.CheckKeysUnicity());
             }
         }
 
@@ -63,11 +64,11 @@ namespace fidelizPlus_back
 
         public string StringValue => Type == "string"
             ? Content.Value
-            : new AppException("Not a string").As<string>();
+            : new AppException("Not a string").Throw<string>();
 
         public bool BoolValue => Type == "boolean"
             ? Content.Value == "true"
-            : new AppException("Not a boolean").As<bool>();
+            : new AppException("Not a boolean").Throw<bool>();
 
         public decimal DecimalValue => Type == "number"
             ? Decimal.Parse(
@@ -75,7 +76,7 @@ namespace fidelizPlus_back
                 NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
                 new CultureInfo("en-US")
             )
-            : new AppException("Not a number").As<decimal>();
+            : new AppException("Not a number").Throw<decimal>();
 
         public int IntValue
         {
@@ -93,7 +94,7 @@ namespace fidelizPlus_back
                 }
                 return ret != null
                     ? (int)ret
-                    : new AppException("Not an integer").As<int>();
+                    : new AppException("Not an integer").Throw<int>();
             }
         }
 
@@ -119,7 +120,7 @@ namespace fidelizPlus_back
                             .Select(child => child.Name.Quote() + ":" + child.Json)
                             .Aggregate("", (x, y) => x == "" ? y : x + "," + y)
                         + "}" :
-                    new AppException($"Unhandled type : {type}").As<string>();
+                    new AppException($"Unhandled type : {type}").Throw<string>();
             }
         }
     }

@@ -5,6 +5,7 @@ namespace fidelizPlus_back.Services
 {
     using AppDomain;
     using Payment;
+    using Identification;
 
     public class MultiService
     {
@@ -15,6 +16,7 @@ namespace fidelizPlus_back.Services
         private AccountService<ClientAccount, ClientAccountDTO> ClientAccountService { get; }
         private AccountService<TraderAccount, TraderAccountDTO> TraderAccountService { get; }
         private PaymentMonitor PaymentMonitor { get; }
+        private Credentials Credentials { get; }
 
         public MultiService(
             ClientService clientService,
@@ -23,7 +25,8 @@ namespace fidelizPlus_back.Services
             RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
             AccountService<ClientAccount, ClientAccountDTO> clientAccountService,
             AccountService<TraderAccount, TraderAccountDTO> traderAccountService,
-            PaymentMonitor paymentMonitor
+            PaymentMonitor paymentMonitor,
+            Credentials credentials
         )
         {
             ClService = clService;
@@ -33,49 +36,10 @@ namespace fidelizPlus_back.Services
             ClientAccountService = clientAccountService;
             TraderAccountService = traderAccountService;
             PaymentMonitor = paymentMonitor;
+            Credentials = credentials;
         }
 
-        public IEnumerable<TraderForClients> TradersForClient(int id, string filter)
-        {
-            Client client = ClientService.FindEntity(id);
-            ClientService.CollectCl(client);
-            var ret = new List<TraderForClients>();
-            Func<TraderForClients, bool> test = filter.ToTest<TraderForClients>();
-            foreach (CommercialLink cl in client.CommercialLink)
-            {
-                ClService.SeekReferences(cl);
-                TraderDTO traderDTO = TraderService.EntityToDTO(cl.Trader);
-                TraderForClients traderForClient = traderDTO.CastAs<TraderForClients>();
-                traderForClient.CommercialRelation = ClService.GetClStatus(cl);
-                if (test(traderForClient))
-                {
-                    ret.Add(traderForClient);
-                }
-            }
-            return ret;
-        }
-
-        public IEnumerable<ClientForTraders> ClientsForTrader(int id, string filter)
-        {
-            Trader trader = TraderService.FindEntity(id);
-            TraderService.CollectCl(trader);
-            var ret = new List<ClientForTraders>();
-            Func<ClientForTraders, bool> test = filter.ToTest<ClientForTraders>();
-            foreach (CommercialLink cl in trader.CommercialLink)
-            {
-                ClService.SeekReferences(cl);
-                ClientDTO clientDTO = ClientService.EntityToDTO(cl.Client);
-                ClientForTraders clientForTrader = clientDTO.CastAs<ClientForTraders>();
-                clientForTrader.CommercialRelation = ClService.GetClStatus(cl);
-                if (test(clientForTrader))
-                {
-                    ret.Add(clientForTrader);
-                }
-            }
-            return ret;
-        }
-
-        public (CommercialLink, Client, Trader) FindOrCreateCl(int clientId, int traderId)
+        private (CommercialLink, Client, Trader) FindOrCreateCl(int clientId, int traderId)
         {
             Client client = ClientService.FindEntity(clientId);
             Trader trader = TraderService.FindEntity(traderId);
@@ -93,8 +57,49 @@ namespace fidelizPlus_back.Services
             return (cl, client, trader);
         }
 
+        public IEnumerable<TraderForClients> TradersForClient(int id, string filter)
+        {
+            ClientService.CheckCredentials(id);
+            Client client = ClientService.FindEntity(id);
+            ClientService.CollectCl(client);
+            var ret = new List<TraderForClients>();
+            Func<TraderForClients, bool> test = filter.ToTest<TraderForClients>();
+            foreach (CommercialLink cl in client.CommercialLink)
+            {
+                PrivateTrader privateTrader = TraderService.EntityToDTO(cl.Trader);
+                TraderForClients traderForClient = privateTrader.CastAs<TraderForClients>();
+                traderForClient.CommercialRelation = ClService.GetClStatus(cl);
+                if (test(traderForClient))
+                {
+                    ret.Add(traderForClient);
+                }
+            }
+            return ret;
+        }
+
+        public IEnumerable<ClientForTraders> ClientsForTrader(int id, string filter)
+        {
+            TraderService.CheckCredentials(id);
+            Trader trader = TraderService.FindEntity(id);
+            TraderService.CollectCl(trader);
+            var ret = new List<ClientForTraders>();
+            Func<ClientForTraders, bool> test = filter.ToTest<ClientForTraders>();
+            foreach (CommercialLink cl in trader.CommercialLink)
+            {
+                PrivateClient privateClient = ClientService.EntityToDTO(cl.Client);
+                ClientForTraders clientForTrader = privateClient.CastAs<ClientForTraders>();
+                clientForTrader.CommercialRelation = ClService.GetClStatus(cl);
+                if (test(clientForTrader))
+                {
+                    ret.Add(clientForTrader);
+                }
+            }
+            return ret;
+        }
+
         public TraderForClients MarkTrader(int clientId, int traderId, bool? bookMark)
         {
+            ClientService.CheckCredentials(clientId);
             if (bookMark == null)
             {
                 throw new AppException("Missing parameters", 400);
@@ -102,7 +107,7 @@ namespace fidelizPlus_back.Services
             (CommercialLink cl, _, Trader trader) = FindOrCreateCl(clientId, traderId);
             cl.Status = cl.Status.SetBit(CommercialLink.BOOKMARK, (bool)bookMark);
             ClService.QuickUpdate(cl.Id, cl);
-            TraderDTO dto = TraderService.EntityToDTO(cl.Trader);
+            PrivateTrader dto = TraderService.EntityToDTO(cl.Trader);
             TraderForClients extended = dto.CastAs<TraderForClients>();
             extended.CommercialRelation = ClService.GetClStatus(cl);
             return extended;
@@ -110,6 +115,7 @@ namespace fidelizPlus_back.Services
 
         public (PurchaseDTO, int) SavePurchase(int clientId, int traderId, decimal amount)
         {
+            TraderService.CheckCredentials(traderId);
             (CommercialLink cl, _, _) = FindOrCreateCl(clientId, traderId);
             Purchase purchase = PurchaseService.Save(new Purchase()
             {
@@ -122,6 +128,7 @@ namespace fidelizPlus_back.Services
 
         public PurchaseDTO Pay(int clientId, int purchaseId)
         {
+            ClientService.CheckCredentials(clientId);
             Purchase purchase = PurchaseService.FindEntity(purchaseId);
             if (purchase.PayingTime != null)
             {
@@ -133,7 +140,6 @@ namespace fidelizPlus_back.Services
             {
                 throw new AppException("Not enough money", 400);
             }
-            PurchaseService.SeekReferences(purchase);
             TraderAccount target = TraderService.GetAccount(purchase.CommercialLink.TraderId);
             PaymentMonitor.Remove(purchaseId);
             source.Balance -= amount;

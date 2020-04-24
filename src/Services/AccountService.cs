@@ -1,4 +1,6 @@
-﻿namespace fidelizPlus_back.Services
+﻿using Microsoft.AspNetCore.Http;
+
+namespace fidelizPlus_back.Services
 {
     using AppDomain;
     using Repositories;
@@ -27,7 +29,7 @@
             return account;
         }
 
-        public override TDTO CheckUpdate(int id, TDTO dto)
+        public override TDTO CheckUpdate(int id, TDTO dto, HttpContext _)
         {
             CheckDTOForUpdating(dto);
             dto.Balance = FindEntity(id).Balance;

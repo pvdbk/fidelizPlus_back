@@ -10,6 +10,8 @@ namespace fidelizPlus_back
     using LogDomain;
     using Repositories;
     using Services;
+    using Payment;
+    using Identification;
 
     public class Startup
     {
@@ -29,7 +31,11 @@ namespace fidelizPlus_back
                     name: MyAllowSpecificOrigins,
                     builder =>
                     {
-                        builder.WithOrigins("http://localhost:3000");
+                        builder
+                            .WithOrigins("http://localhost:3000")
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                            .AllowCredentials();
                     }
                 );
             });
@@ -58,13 +64,14 @@ namespace fidelizPlus_back
                 options.Cookie.Name = "sessionId";
             });
 
-            services.AddSingleton<Payment.PaymentMonitor>();
-            services.AddScoped<Identification.Credentials>();
+            services.AddSingleton<PaymentMonitor>();
+            services.AddScoped<Credentials>();
+            services.AddScoped<CredentialsHandler>();
             services.AddScoped<LogService>();
 
             services.AddScoped<CrudRepository<User>>();
-            services.AddScoped<CrudService<User, ClientDTO>>();
-            services.AddScoped<CrudService<User, TraderDTO>>();
+            services.AddScoped<CrudService<User, PrivateClient>>();
+            services.AddScoped<CrudService<User, PrivateTrader>>();
 
             services.AddScoped<UserEntityRepository<Client, ClientAccount>>();
             services.AddScoped<CrudRepository<ClientAccount>>();
@@ -100,8 +107,6 @@ namespace fidelizPlus_back
             app.UseRouting();
 
             app.UseCors(MyAllowSpecificOrigins);
-
-            app.UseAuthorization();
 
             app.UseSession();
 

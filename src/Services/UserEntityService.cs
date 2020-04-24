@@ -2,52 +2,64 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Microsoft.AspNetCore.Http;
 
 namespace fidelizPlus_back.Services
 {
     using AppDomain;
     using Repositories;
+    using Identification;
 
-    public class UserEntityService<TEntity, TDTO, TAccount, TAccountDTO> : CrudService<TEntity, TDTO>
+    public class UserEntityService<TEntity, TPrivate, TPublic, TAccount, TAccountDTO> : CrudService<TEntity, TPrivate>
         where TEntity : UserEntity<TAccount>, new()
-        where TDTO : UserDTO<TAccountDTO>, new()
+        where TPrivate : UserDTO<TAccountDTO>, new()
+        where TPublic : class, new()
         where TAccount : Account, new()
         where TAccountDTO : AccountDTO, new()
     {
-        public CrudService<User, TDTO> UserService { get; }
+        public CrudService<User, TPrivate> UserService { get; }
         public CrudService<TAccount, TAccountDTO> AccountService { get; }
         public CommercialLinkService ClService { get; }
         public RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
         public Action<TEntity> SeekReferences { get; }
+        public Credentials Credentials { get; }
 
         public UserEntityService(
             UserEntityRepository<TEntity, TAccount> repo,
-            CrudService<User, TDTO> userService,
+            CrudService<User, TPrivate> userService,
             AccountService<TAccount, TAccountDTO> accountService,
             CommercialLinkService clService,
-            RelatedToBothService<Purchase, PurchaseDTO> purchaseService
+            RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
+            Credentials credentials
         ) : base(repo)
         {
             UserService = userService;
             AccountService = accountService;
             ClService = clService;
             PurchaseService = purchaseService;
+            Credentials = credentials;
             SeekReferences = repo.SeekReferences;
             UnexpectedForSaving = new string[] { "Id", "CreationTime" };
             UnexpectedForUpdating = new string[] { "Id", "CreationTime" };
         }
 
-        public TAccount DTOToAccount(TAccountDTO dto)
+        public void CheckCredentials(int id)
         {
-            return AccountService.DTOToEntity(dto);
+            if (
+                !Credentials.AreSetted ||
+                Credentials.EntityType != typeof(TEntity) ||
+                Credentials.Id != id
+            )
+            {
+                throw new AppException("Unauthorized operation", 400);
+            }
         }
 
-        public TAccountDTO AccountToDTO(TAccount account)
-        {
-            return AccountService.EntityToDTO(account);
-        }
+        public TAccount DTOToAccount(TAccountDTO dto) => AccountService.DTOToEntity(dto);
 
-        public TEntity DTOToUserEntity(TDTO dto, int userId, int accountId)
+        public TAccountDTO AccountToDTO(TAccount account) => AccountService.EntityToDTO(account);
+
+        public TEntity DTOToUserEntity(TPrivate dto, int userId, int accountId)
         {
             TEntity ret = dto.CastAs<TEntity>();
             ret.UserId = userId;
@@ -55,35 +67,73 @@ namespace fidelizPlus_back.Services
             return ret;
         }
 
-        public override TDTO EntityToDTO(TEntity entity)
+        public override TPrivate EntityToDTO(TEntity entity)
         {
-            if (entity.User == null)
-            {
-                SeekReferences(entity);
-            }
-            TDTO ret = base.EntityToDTO(entity);
-            TDTO toMergeWithRet = UserService.EntityToDTO(entity.User);
-            IEnumerable<PropertyInfo> props = typeof(TDTO).GetProps();
-            foreach (PropertyInfo prop in props)
+            SeekReferences(entity);
+            TPrivate ret = base.EntityToDTO(entity);
+            TPrivate toMergeWithRet = UserService.EntityToDTO(entity.User);
+            IEnumerable<PropertyInfo> props = typeof(TPrivate).GetProps();
+            props.ForEach(prop =>
             {
                 object value = prop.GetValue(toMergeWithRet);
                 if (value != null)
                 {
                     prop.SetValue(ret, value);
                 }
-            }
+            });
             ret.Id = entity.Id;
             ret.CreationTime = entity.User.CreationTime;
             ret.Account = AccountService.EntityToDTO(entity.Account);
             return ret;
         }
 
-        public override (TDTO, int) CheckSave(TDTO dto)
+        public TAccount GetAccount(int? id) => FindEntity(id).Account;
+
+        public void CollectCl(TEntity entity)
+        {
+            Repo.Entry(entity).Collection("CommercialLink").Load();
+            entity.CommercialLink.ForEach(cl => ClService.SeekReferences(cl));
+        }
+
+
+        public virtual IEnumerable<TPublic> FilterOrFindAll(string filter = null) =>
+            Entities
+                .ToList()
+                .Select(entity => EntityToDTO(entity).CastAs<TPublic>())
+                .Where(filter.ToTest<TPublic>());
+
+        public object EntityToAuthorizedDTO(TEntity entity)
+        {
+            object ret = EntityToDTO(entity);
+            try
+            {
+                CheckCredentials(entity.Id);
+            }
+            catch
+            {
+                ret = ret.CastAs<TPublic>();
+            }
+            return ret;
+        }
+
+        public TEntity FindEntityByConnectionId(string connectionId)
+        {
+            TEntity entity = Entities.Where(e => e.ConnectionId == connectionId).FirstOrDefault();
+            return entity != null
+                ? entity
+                : new AppException($"{typeof(TEntity).Name} not found", 404).Throw<TEntity>();
+        }
+
+        public object FindByConnectionId(string connectionId) => EntityToAuthorizedDTO(FindEntityByConnectionId(connectionId));
+
+        public object FindById(int id) => EntityToAuthorizedDTO(FindEntity(id));
+
+        public (TPrivate, int) CheckSave(TPrivate dto)
         {
             CheckDTOForSaving(dto);
             TAccountDTO accountDTO = dto.Account;
             AccountService.CheckDTOForSaving(accountDTO);
-            if (Repo.FindAll().Any(entity => entity.ConnectionId == dto.ConnectionId))
+            if (Entities.Any(entity => entity.ConnectionId == dto.ConnectionId))
             {
                 throw new AppException($"'{dto.ConnectionId}' is already used as connectionId", 400);
             }
@@ -94,18 +144,27 @@ namespace fidelizPlus_back.Services
             return (EntityToDTO(entity), entity.Id);
         }
 
-        public override TDTO CheckUpdate(int id, TDTO dto)
+        public override TPrivate CheckUpdate(int id, TPrivate dto, HttpContext ctxt)
         {
+            CheckCredentials(id);
             CheckDTOForUpdating(dto);
             AccountService.CheckDTOForUpdating(dto.Account);
-            TEntity entity = FindEntity(id);
-            SeekReferences(entity);
-            dto.Account.Balance = entity.Account.Balance;
-            int userId = entity.UserId;
-            if (Repo.FindAll().Any(e => e.ConnectionId == dto.ConnectionId && e.Id != id))
+            if (Entities.Any(e => e.ConnectionId == dto.ConnectionId && e.Id != id))
             {
                 throw new AppException($"'{dto.ConnectionId}' is already used as connectionId", 400);
             }
+            TEntity entity = FindEntity(id);
+            IRequestCookieCollection cookies = ctxt.Request.Cookies;
+            if (
+                entity.User.Password != dto.Password &&
+                cookies.ContainsKey(Credentials.PASSWORD_KEY) &&
+                !String.IsNullOrEmpty(cookies[Credentials.PASSWORD_KEY])
+            )
+            {
+                ctxt.Response.Cookies.Append(Credentials.PASSWORD_KEY, dto.Password);
+            }
+            dto.Account.Balance = entity.Account.Balance;
+            int userId = entity.UserId;
             entity = DTOToUserEntity(dto, userId, id);
             entity.Id = id;
             entity = Repo.Update(entity);
@@ -114,39 +173,27 @@ namespace fidelizPlus_back.Services
             return EntityToDTO(entity);
         }
 
-        public void CollectCl(TEntity entity)
+        public TAccountDTO GetAccountDTO(int id)
         {
-            Repo.Entry(entity).Collection("CommercialLink").Load();
-        }
-
-        public TAccount GetAccount(int? id)
-        {
-            TEntity entity = FindEntity(id);
-            SeekReferences(entity);
-            return entity.Account;
-        }
-
-        public TAccountDTO GetAccountDTO(int? id)
-        {
+            CheckCredentials(id);
             return AccountToDTO(GetAccount(id));
         }
 
         public IEnumerable<PurchaseDTO> Purchases(int id, string filter)
         {
+            CheckCredentials(id);
             Func<PurchaseDTO, bool> test = filter.ToTest<PurchaseDTO>();
             TEntity entity = FindEntity(id);
             CollectCl(entity);
-            IEnumerable<CommercialLink> cls = entity.CommercialLink;
-            var ret = new List<PurchaseDTO>();
-            foreach (CommercialLink cl in cls)
-            {
-                ClService.CollectPurchases(cl);
-                IEnumerable<PurchaseDTO> toAdd = cl.Purchase
-                    .Select(purchase => PurchaseService.EntityToDTO(purchase))
-                    .Where(test);
-                ret = ret.Concat(toAdd).ToList();
-            }
-            return ret;
+            entity.CommercialLink.ForEach(cl => ClService.CollectPurchases(cl));
+            return entity.CommercialLink.Reduce<CommercialLink, IEnumerable<PurchaseDTO>>(
+                (ret, cl) => ret.Concat(
+                    cl.Purchase
+                        .Select(purchase => PurchaseService.EntityToDTO(purchase))
+                        .Where(test)
+                ),
+                Enumerable.Empty<PurchaseDTO>()
+            );
         }
     }
 }

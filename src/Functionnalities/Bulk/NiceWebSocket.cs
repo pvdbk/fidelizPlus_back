@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Net.WebSockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,14 +10,10 @@ namespace fidelizPlus_back
     {
         private Task<WebSocket> WebSocket { get; }
 
-        public NiceWebSocket(HttpContext context)
-        {
-            if (!context.WebSockets.IsWebSocketRequest)
-            {
-                throw new AppException("Inappropriate use of NiceWebSocket");
-            }
-            WebSocket = context.WebSockets.AcceptWebSocketAsync();
-        }
+        public NiceWebSocket(HttpContext context) =>
+            WebSocket = context.WebSockets.IsWebSocketRequest
+                ? context.WebSockets.AcceptWebSocketAsync()
+                : new AppException("Inappropriate use of NiceWebSocket").Throw<Task<WebSocket>>();
 
         public async Task<string> Read()
         {
@@ -27,11 +22,9 @@ namespace fidelizPlus_back
                 new ArraySegment<byte>(buffer),
                 CancellationToken.None
             );
-            if (!read.EndOfMessage)
-            {
-                throw new AppException("Too long");
-            }
-            return Encoding.UTF8.GetString(buffer);
+            return read.EndOfMessage
+                ? buffer.BytesToString()
+                : new AppException("Too long").Throw<string>();
         }
 
         public async Task Send(string s) => await (await WebSocket).SendAsync(

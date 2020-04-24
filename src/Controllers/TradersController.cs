@@ -7,7 +7,7 @@ namespace fidelizPlus_back.Controllers
 
     [Route("[controller]")]
     [ApiController]
-    public class TradersController : AppController<Trader, TraderDTO>
+    public class TradersController : AppController<Trader, PrivateTrader, PublicTrader, TraderAccount, TraderAccountDTO>
     {
         private TraderService TraderService { get; }
         private MultiService MultiService { get; }
@@ -19,25 +19,10 @@ namespace fidelizPlus_back.Controllers
         }
 
         [HttpGet]
-        [Route("{id}/account")]
-        public IActionResult Accounts(int id)
-        {
-            return Ok(TraderService.GetAccountDTO(id));
-        }
-
-        [HttpGet]
         [Route("{id}/clients")]
         public IActionResult Clients(int id, string filter)
-        {
-            return Ok(MultiService.ClientsForTrader(id, filter));
-        }
+            => Ok(MultiService.ClientsForTrader(id, filter));
 
-        [HttpGet]
-        [Route("{id}/purchases")]
-        public IActionResult Purchases(int id, string filter)
-        {
-            return Ok(TraderService.Purchases(id, filter));
-        }
 
         [HttpPost]
         [Route("{traderId}/purchases/clients/{clientId}")]

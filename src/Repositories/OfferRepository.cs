@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 
 namespace fidelizPlus_back.Repositories
 {
@@ -10,15 +9,12 @@ namespace fidelizPlus_back.Repositories
         public OfferRepository(AppContext ctxt) : base(ctxt)
         { }
 
-        public int NullifyTrader(int traderId)
+        public void NullifyTrader(int traderId)
         {
-            List<Offer> toUpdate = Entities.Where(offer => offer.TraderId == traderId).ToList();
-            foreach (Offer offer in toUpdate)
-            {
-                offer.TraderId = null;
-            }
+            Entities
+                .Where(offer => offer.TraderId == traderId)
+                .ForEach(offer => offer.TraderId = null);
             SaveChanges();
-            return toUpdate.Count;
         }
     }
 }

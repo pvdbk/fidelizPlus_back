@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Http;
 namespace fidelizPlus_back.Controllers
 {
     using Identification;
-    using Services;
 
     [Route("[controller]")]
     [ApiController]
@@ -16,7 +15,7 @@ namespace fidelizPlus_back.Controllers
         private const string PASSWORD_KEY = Credentials.PASSWORD_KEY;
         private Credentials Credentials { get; }
 
-        public LogOutController(MultiService multiService, Credentials credentials)
+        public LogOutController(Credentials credentials)
         {
             Credentials = credentials;
         }

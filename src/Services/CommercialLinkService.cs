@@ -19,55 +19,33 @@ namespace fidelizPlus_back.Services
             PurchaseService = purchaseService;
         }
 
-        public override CommercialLink EntityToDTO(CommercialLink entity)
-        {
-            return entity;
-        }
+        public override CommercialLink EntityToDTO(CommercialLink entity) => entity;
 
-        public override CommercialLink DTOToEntity(CommercialLink dto)
-        {
-            return dto;
-        }
+        public override CommercialLink DTOToEntity(CommercialLink dto) => dto;
 
-        public void SeekReferences(CommercialLink cl)
-        {
-            ClRepo.SeekReferences(cl);
-        }
+        public void SeekReferences(CommercialLink cl) => ClRepo.SeekReferences(cl);
 
-        public void CollectPurchases(CommercialLink cl)
-        {
-            ClRepo.CollectPurchases(cl);
-        }
+        public void CollectPurchases(CommercialLink cl) => ClRepo.CollectPurchases(cl);
 
-        public void NullifyClient(int clientId)
-        {
-            ClRepo.NullifyClient(clientId);
-        }
+        public void NullifyClient(int clientId) => ClRepo.NullifyClient(clientId);
 
-        public void NullifyTrader(int traderId)
-        {
-            ClRepo.NullifyTrader(traderId);
-        }
 
-        public CommercialRelation GetClStatus(CommercialLink cl)
-        {
-            SeekReferences(cl);
-            return new CommercialRelation()
+        public void NullifyTrader(int traderId) => ClRepo.NullifyTrader(traderId);
+
+        public CommercialRelation GetClStatus(CommercialLink cl) =>
+            new CommercialRelation()
             {
                 Bookmark = cl.Status.GetBit(CommercialLink.BOOKMARK),
-                Debt = PurchaseService
-                    .FilterOrFindAll(null)
-                    .Where(purchase => purchase.ClientId == cl.Client.Id && purchase.PayingTime == null)
+                Debt = PurchaseService.Entities
+                    .Where(purchase => purchase.CommercialLinkId == cl.Id && purchase.PayingTime == null)
                     .Select(purchase => purchase.Amount)
+                    .ToList()
                     .Aggregate(0m, (x, y) => x + y)
             };
-        }
 
-        public CommercialLink FindWithBoth(int clientId, int traderId)
-        {
-            return Repo.Entities
+        public CommercialLink FindWithBoth(int clientId, int traderId) =>
+            Entities
                 .Where(cl => cl.ClientId == clientId && cl.TraderId == traderId)
                 .FirstOrDefault();
-        }
     }
 }

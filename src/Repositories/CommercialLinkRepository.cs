@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 
 namespace fidelizPlus_back.Repositories
 {
@@ -10,26 +9,20 @@ namespace fidelizPlus_back.Repositories
         public CommercialLinkRepository(AppContext ctxt) : base(ctxt)
         { }
 
-        public int NullifyClient(int clientId)
+        public void NullifyClient(int clientId)
         {
-            List<CommercialLink> toUpdate = Entities.Where(cl => cl.ClientId == clientId).ToList();
-            foreach (CommercialLink cl in toUpdate)
-            {
-                cl.ClientId = null;
-            }
+            Entities
+                .Where(cl => cl.ClientId == clientId)
+                .ForEach(cl => cl.ClientId = null);
             SaveChanges();
-            return toUpdate.Count;
         }
 
-        public int NullifyTrader(int traderId)
+        public void NullifyTrader(int traderId)
         {
-            List<CommercialLink> toUpdate = Entities.Where(cl => cl.TraderId == traderId).ToList();
-            foreach (CommercialLink cl in toUpdate)
-            {
-                cl.TraderId = null;
-            }
+            Entities
+                .Where(cl => cl.TraderId == traderId)
+                .ForEach(cl => cl.TraderId = null);
             SaveChanges();
-            return toUpdate.Count;
         }
 
         public void SeekReferences(CommercialLink cl)

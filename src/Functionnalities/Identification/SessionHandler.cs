@@ -4,21 +4,17 @@ using Microsoft.AspNetCore.Http;
 
 namespace fidelizPlus_back.Identification
 {
-    using Services;
-
     public class SessionHandler
     {
         public const string CREDENTIALS_KEY = "credentials";
         private RequestDelegate Next { get; }
-        private MultiService MultiService { get; }
 
-        public SessionHandler(RequestDelegate next, MultiService multiService)
+        public SessionHandler(RequestDelegate next)
         {
             Next = next;
-            MultiService = multiService;
         }
 
-        public async Task Invoke(HttpContext context, Credentials credentials)
+        public async Task Invoke(HttpContext context, CredentialsHandler credentialsHandler)
         {
             string credentialsString = context.Session.GetString(CREDENTIALS_KEY);
             if (String.IsNullOrEmpty(credentialsString))
@@ -26,11 +22,10 @@ namespace fidelizPlus_back.Identification
                 try
                 {
                     IRequestCookieCollection cookies = context.Request.Cookies;
-                    credentials.Set(cookies);
-                    credentialsString = credentials.ToString();
-                    if (credentialsString != null)
+                    credentialsHandler.SetAndCheck(cookies);
+                    if (credentialsHandler.AreSetted)
                     {
-                        context.Session.SetString(CREDENTIALS_KEY, credentialsString);
+                        context.Session.SetString(CREDENTIALS_KEY, credentialsHandler.GetString);
                     }
                 }
                 catch (AppException)
@@ -40,7 +35,7 @@ namespace fidelizPlus_back.Identification
             }
             else
             {
-                credentials.Set(credentialsString);
+                credentialsHandler.Set(credentialsString);
             }
             await Next(context);
         }

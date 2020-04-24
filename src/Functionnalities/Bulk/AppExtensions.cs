@@ -36,6 +36,8 @@ namespace fidelizPlus_back
 
         public static byte[] ToBytes(this string s) => Encoding.UTF8.GetBytes(s);
 
+        public static string BytesToString(this byte[] b) => Encoding.UTF8.GetString(b);
+
         public static int ToInt(this string s)
         {
             int ret = 0;
@@ -45,6 +47,24 @@ namespace fidelizPlus_back
             }
             catch
             { }
+            return ret;
+        }
+
+        public static void ForEach<T>(this IEnumerable<T> toHandle, Action<T> callback)
+        {
+            foreach (T item in toHandle)
+            {
+                callback(item);
+            }
+        }
+
+        public static TOut Reduce<TIn, TOut>(this IEnumerable<TIn> toHandle, Func<TOut, TIn, TOut> callback, TOut init)
+        {
+            TOut ret = init;
+            foreach (TIn item in toHandle)
+            {
+                ret = callback(ret, item);
+            }
             return ret;
         }
 
@@ -69,7 +89,7 @@ namespace fidelizPlus_back
             var commonProps = new List<(PropertyInfo, PropertyInfo)>();
             IEnumerable<PropertyInfo> targetProps = typeof(T).GetProps();
             IEnumerable<PropertyInfo> sourceProps = source.GetType().GetProps();
-            foreach (PropertyInfo targetProp in targetProps)
+            targetProps.ForEach(targetProp =>
             {
                 PropertyInfo sourceProp = sourceProps
                     .Where(prop => prop.Name == targetProp.Name && prop.PropertyType == targetProp.PropertyType)
@@ -78,11 +98,12 @@ namespace fidelizPlus_back
                 {
                     commonProps.Add((targetProp, sourceProp));
                 }
-            }
-            foreach ((PropertyInfo targetProp, PropertyInfo sourceProp) in commonProps)
+            });
+            commonProps.ForEach(props =>
             {
+                (PropertyInfo targetProp, PropertyInfo sourceProp) = props;
                 targetProp.SetValue(ret, sourceProp.GetValue(source));
-            }
+            });
             return ret;
         }
 

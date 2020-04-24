@@ -13,7 +13,7 @@ namespace fidelizPlus_back
             Status = status;
         }
 
-        public T As<T>()
+        public T Throw<T>()
         {
             throw this;
         }

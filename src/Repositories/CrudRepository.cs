@@ -12,42 +12,37 @@ namespace fidelizPlus_back.Repositories
     public class CrudRepository<T> where T : Entity
     {
         public Func<int> SaveChanges { get; }
-        public DbSet<T> Entities { get; }
+        private DbSet<T> dbSet { get; }
         public Func<object, EntityEntry> Entry { get; }
-        public IEnumerable<PropertyInfo> UpdatableProps { get; }
+        private IEnumerable<PropertyInfo> UpdatableProps { get; }
 
         public CrudRepository(AppContext ctxt)
         {
             SaveChanges = ctxt.SaveChanges;
-            Entities = ctxt.Set<T>();
+            dbSet = ctxt.Set<T>();
             Entry = ctxt.Entry;
             UpdatableProps = typeof(T).GetAtomicProps();
         }
 
-        public T FindEntity(int? id)
+        public virtual IQueryable<T> Entities => dbSet;
+
+        public virtual T FindEntity(int? id)
         {
             T entity = id == null ? null : Entities.FirstOrDefault(entity => entity.Id == id);
-            if (entity == null)
-            {
-                throw new AppException($"{typeof(T).Name} not found");
-            }
-            return entity;
-        }
-
-        public virtual IQueryable<T> FindAll()
-        {
-            return Entities;
+            return entity != null
+                ? entity
+                : new AppException($"{typeof(T).Name} not found").Throw<T>();
         }
 
         public virtual void Save(T entity)
         {
-            Entities.Add(entity);
+            dbSet.Add(entity);
             SaveChanges();
         }
 
         public void Delete(int id)
         {
-            Entities.Remove(FindEntity(id));
+            dbSet.Remove(FindEntity(id));
             SaveChanges();
         }
 
@@ -56,10 +51,7 @@ namespace fidelizPlus_back.Repositories
             T toUpdate = FindEntity(newEntity.Id);
             if (toUpdate != newEntity)
             {
-                foreach (PropertyInfo prop in UpdatableProps)
-                {
-                    prop.SetValue(toUpdate, prop.GetValue(newEntity));
-                }
+                UpdatableProps.ForEach(prop => prop.SetValue(toUpdate, prop.GetValue(newEntity)));
             }
             SaveChanges();
             return toUpdate;

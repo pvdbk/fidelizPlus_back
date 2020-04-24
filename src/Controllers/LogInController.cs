@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Http;
 namespace fidelizPlus_back.Controllers
 {
     using Identification;
-    using Services;
 
     [Route("[controller]")]
     [ApiController]
@@ -14,11 +13,11 @@ namespace fidelizPlus_back.Controllers
         private const string USER_TYPE_KEY = Credentials.USER_TYPE_KEY;
         private const string ID_KEY = Credentials.ID_KEY;
         private const string PASSWORD_KEY = Credentials.PASSWORD_KEY;
-        private Credentials Credentials { get; }
+        private CredentialsHandler CredentialsHandler { get; }
 
-        public LogInController(MultiService multiService, Credentials credentials)
+        public LogInController(CredentialsHandler credentialsHandler)
         {
-            Credentials = credentials;
+            CredentialsHandler = credentialsHandler;
         }
 
         [HttpPost]
@@ -33,18 +32,18 @@ namespace fidelizPlus_back.Controllers
             {
                 throw new AppException("A connection is still enabled", 400);
             }
-            Credentials.Set(dto);
+            object ret = CredentialsHandler.SetAndCheck(dto);
             if (stayConnected)
             {
                 var cookieOptions = new CookieOptions() { IsEssential = true };
                 Action<string, string> addCookie = (key, value) =>
                     HttpContext.Response.Cookies.Append(key, value, cookieOptions);
-                addCookie(USER_TYPE_KEY, $"{(int)Credentials.UserType}");
-                addCookie(ID_KEY, $"{Credentials.Id}");
-                addCookie(PASSWORD_KEY, $"{Credentials.Password}");
+                addCookie(USER_TYPE_KEY, $"{CredentialsHandler.GetUserType}");
+                addCookie(ID_KEY, $"{CredentialsHandler.GetId}");
+                addCookie(PASSWORD_KEY, $"{CredentialsHandler.GetPassword}");
             }
-            session.SetString(SessionHandler.CREDENTIALS_KEY, Credentials.ToString());
-            return NoContent();
+            session.SetString(SessionHandler.CREDENTIALS_KEY, CredentialsHandler.GetString);
+            return Ok(ret);
         }
     }
 }
