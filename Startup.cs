@@ -7,7 +7,6 @@ using System;
 namespace fidelizPlus_back
 {
     using AppDomain;
-    using DTO;
     using LogDomain;
     using Repositories;
     using Services;
@@ -59,8 +58,8 @@ namespace fidelizPlus_back
                 options.Cookie.Name = "sessionId";
             });
 
-            services.AddSingleton<PaymentMonitor>();
-            services.AddScoped<Credentials>();
+            services.AddSingleton<Payment.PaymentMonitor>();
+            services.AddScoped<Identification.Credentials>();
             services.AddScoped<LogService>();
 
             services.AddScoped<CrudRepository<User>>();
