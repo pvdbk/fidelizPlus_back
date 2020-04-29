@@ -15,10 +15,7 @@ namespace fidelizPlus_back.Identification
         public int Id { get; private set; }
         public bool AreSetted { get; private set; }
 
-        public Credentials()
-        {
-            AreSetted = false;
-        }
+        public Credentials() => AreSetted = false;
 
         public void Set(string userType, int id)
         {

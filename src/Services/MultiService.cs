@@ -115,13 +115,18 @@ namespace fidelizPlus_back.Services
 
         public (PurchaseDTO, int) SavePurchase(int clientId, int traderId, decimal amount)
         {
+			decimal amnt = (decimal)(int)(amount*100) / 100;
+			if(amnt <= 0)
+			{
+				throw new AppException("A strictly positive amount must be specified", 400);
+			}
             TraderService.CheckCredentials(traderId);
             (CommercialLink cl, _, _) = FindOrCreateCl(clientId, traderId);
             Purchase purchase = PurchaseService.Save(new Purchase()
             {
                 CommercialLinkId = cl.Id,
                 PayingTime = null,
-                Amount = amount
+                Amount = amnt
             });
             return (PurchaseService.EntityToDTO(purchase), purchase.Id);
         }

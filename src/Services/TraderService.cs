@@ -19,8 +19,8 @@
         ) : base(repo, userService, accountService, clService, purchaseService, credentials)
         {
             OfferService = offerService;
-            NotRequiredForSaving = new string[] { "Address", "Phone", "LogoPath" };
-            NotRequiredForUpdating = new string[] { "Address", "Phone", "LogoPath" };
+            NotRequiredForSaving = new string[] { "Address", "Phone" };
+            NotRequiredForUpdating = new string[] { "Address", "Phone" };
         }
 
         public override void Delete(int id)

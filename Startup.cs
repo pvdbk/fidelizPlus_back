@@ -65,11 +65,12 @@ namespace fidelizPlus_back
             });
 
             services.AddSingleton<PaymentMonitor>();
-            services.AddScoped<Credentials>();
+			services.AddScoped<Credentials>();
             services.AddScoped<CredentialsHandler>();
             services.AddScoped<LogService>();
+			services.AddScoped<LogoService>();
 
-            services.AddScoped<CrudRepository<User>>();
+			services.AddScoped<CrudRepository<User>>();
             services.AddScoped<CrudService<User, PrivateClient>>();
             services.AddScoped<CrudService<User, PrivateTrader>>();
 

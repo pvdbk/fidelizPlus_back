@@ -11,6 +11,34 @@ namespace fidelizPlus_back
 
         public ExceptionHandler(RequestDelegate next) => Next = next;
 
+        private async Task SendHttpResponse(HttpContext context, LogService logService, AppException e)
+        {
+            HttpResponse response = context.Response;
+            byte[] bodyContent;
+            if (e is SendPic)
+            {
+                response.ContentType = Services.LogoService.MIME_TYPE;
+                response.StatusCode = 200;
+                bodyContent = (byte[])e.Content;
+            }
+            else
+            {
+                response.ContentType = "application/json";
+                response.StatusCode = e.Status;
+                string errorJson = e.Content.ToJson();
+                if (e.Status == 500)
+                {
+                    logService.AddError(errorJson);
+                    bodyContent = "Server error".Quote().ToBytes();
+                }
+                else
+                {
+                    bodyContent = errorJson.ToBytes();
+                }
+            }
+            await context.Response.Body.WriteAsync(bodyContent);
+        }
+
         public async Task Invoke(HttpContext context, LogService logService)
         {
             try
@@ -19,24 +47,15 @@ namespace fidelizPlus_back
             }
             catch (AppException e)
             {
-                string errorJson = e.Content.ToJson();
-                if (!context.WebSockets.IsWebSocketRequest)
+                if (context.WebSockets.IsWebSocketRequest)
                 {
-                    context.Response.StatusCode = e.Status;
-                    if (e.Status == 500)
-                    {
-                        logService.AddError(errorJson);
-                        errorJson = "Server error".Quote();
-                    }
-                    context.Response.ContentType = "application/json";
-                    await context.Response.Body.WriteAsync(errorJson.ToBytes());
+                    logService.AddError(e.Content.ToJson());
                 }
                 else
                 {
-                    logService.AddError(errorJson);
+                    await SendHttpResponse(context, logService, e);
                 }
             }
-            return;
         }
     }
 }

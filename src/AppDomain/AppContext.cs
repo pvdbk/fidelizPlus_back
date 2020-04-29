@@ -274,12 +274,6 @@ namespace fidelizPlus_back.AppDomain
                     .HasCharSet("utf8mb4")
                     .HasCollation("utf8mb4_unicode_ci");
 
-                entity.Property(e => e.LogoPath)
-                    .HasColumnName("logo_path")
-                    .HasColumnType("varchar(45)")
-                    .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_unicode_ci");
-
                 entity.Property(e => e.Phone)
                     .HasColumnName("phone")
                     .HasColumnType("varchar(45)")

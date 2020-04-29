@@ -53,7 +53,6 @@ CREATE TABLE `app`.`trader` (
   `label` VARCHAR(500) NOT NULL,
   `address` VARCHAR(500) NULL DEFAULT NULL,
   `phone` VARCHAR(45) NULL DEFAULT NULL,
-  `logo_path` VARCHAR(45) NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `connection_id_UNIQUE` (`connection_id` ASC),
   INDEX `fk_trader_user1_idx` (`user_id` ASC),

@@ -5,7 +5,7 @@ namespace fidelizPlus_back.Controllers
     using AppDomain;
     using Services;
 
-    public abstract class AppController<TEntity, TPrivate, TPublic, TAccount, TAccountDTO> : ControllerBase
+    public abstract class UserController<TEntity, TPrivate, TPublic, TAccount, TAccountDTO> : ControllerBase
         where TEntity : UserEntity<TAccount>, new()
         where TPrivate : UserDTO<TAccountDTO>, new()
         where TPublic : class, new()
@@ -14,7 +14,7 @@ namespace fidelizPlus_back.Controllers
     {
         private UserEntityService<TEntity, TPrivate, TPublic, TAccount, TAccountDTO> Service { get; }
 
-        public AppController(UserEntityService<TEntity, TPrivate, TPublic, TAccount, TAccountDTO> service) : base() =>
+        public UserController(UserEntityService<TEntity, TPrivate, TPublic, TAccount, TAccountDTO> service) : base() =>
             Service = service;
 
         [HttpGet]

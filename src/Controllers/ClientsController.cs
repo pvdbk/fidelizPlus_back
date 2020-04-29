@@ -7,7 +7,7 @@ namespace fidelizPlus_back.Controllers
 
     [Route("[controller]")]
     [ApiController]
-    public class ClientsController : AppController<Client, PrivateClient, PublicClient, ClientAccount, ClientAccountDTO>
+    public class ClientsController : UserController<Client, PrivateClient, PublicClient, ClientAccount, ClientAccountDTO>
     {
         private ClientService ClientService { get; }
         private RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }

@@ -85,7 +85,7 @@ namespace fidelizPlus_back.Payment
             }
             catch (Exception e)
             {
-                object errorObject = e is AppException ? ((AppException)e).Content : "Not a number";
+                object errorObject = e is AppException ae ? ae.Content : "Not a number";
                 await webSocket.Error(JsonSerializer.Serialize(errorObject));
                 throw new AppException(errorObject);
             }
