@@ -1,7 +1,9 @@
 namespace fidelizPlus_back
 {
-    public class SendPic : AppException
-    {
-        public SendPic(byte[] picBytes) : base(picBytes) { }
-    }
+	public class SendPic : System.Exception
+	{
+		public byte[] PicBytes { get; }
+
+		public SendPic(byte[] picBytes) : base() => PicBytes = picBytes;
+	}
 }

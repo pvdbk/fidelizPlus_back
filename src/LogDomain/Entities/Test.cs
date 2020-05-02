@@ -1,9 +1,9 @@
 ﻿namespace fidelizPlus_back.LogDomain
 {
-    using AppDomain;
+	using AppDomain;
 
-    public class Test : Entity
-    {
-        public string Content { get; set; }
-    }
+	public class Test : Entity
+	{
+		public string Content { get; set; }
+	}
 }

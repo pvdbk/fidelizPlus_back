@@ -2,19 +2,19 @@
 
 namespace fidelizPlus_back.Repositories
 {
-    using AppDomain;
+	using AppDomain;
 
-    public class ClientOfferRepository : CrudRepository<ClientOffer>
-    {
-        public ClientOfferRepository(AppContext ctxt) : base(ctxt)
-        { }
+	public class ClientOfferRepository : CrudRepository<ClientOffer>
+	{
+		public ClientOfferRepository(AppContext ctxt) : base(ctxt)
+		{ }
 
-        public void NullifyClient(int clientId)
-        {
-            Entities
-                .Where(co => co.ClientId == clientId)
-                .ForEach(co => co.ClientId = null);
-            SaveChanges();
-        }
-    }
+		public void NullifyClient(int clientId)
+		{
+			Entities
+				.Where(co => co.ClientId == clientId)
+				.ForEach(co => co.ClientId = null);
+			SaveChanges();
+		}
+	}
 }

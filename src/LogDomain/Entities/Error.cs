@@ -2,11 +2,11 @@
 
 namespace fidelizPlus_back.LogDomain
 {
-    using AppDomain;
+	using AppDomain;
 
-    public class Error : Entity
-    {
-        public string Content { get; set; }
-        public DateTime ThrowingTime { get; set; }
-    }
+	public class Error : Entity
+	{
+		public string Content { get; set; }
+		public DateTime ThrowingTime { get; set; }
+	}
 }

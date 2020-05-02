@@ -50,7 +50,7 @@ namespace fidelizPlus_back.Services
 					}
 					else
 					{
-						throw new AppException("Corrupted file", 400);
+						throw new Break("Corrupted file", BreakCode.ErrResize, 400);
 					}
 				}
 			}
@@ -60,15 +60,15 @@ namespace fidelizPlus_back.Services
 		{
 			if(formFile == null)
 			{
-				throw new AppException("Unspecified file", 400);
+				throw new Break("Unspecified file", BreakCode.NoFile, 400);
 			}
 			if (formFile.Length > MAX_SIZE)
 			{
-				throw new AppException("File too voluminous", 400);
+				throw new Break("File too voluminous", BreakCode.BigFile, 400);
 			}
 			if (formFile.ContentType != MIME_TYPE)
 			{
-				throw new AppException($"Only {MIME_TYPE}", 400);
+				throw new Break($"Only {MIME_TYPE} is accepted and {formFile.ContentType} was received", BreakCode.NotAPic, 400);
 			}
 			TraderService.CheckCredentials(traderId);
 			using (var originalStream = new MemoryStream())
@@ -84,7 +84,12 @@ namespace fidelizPlus_back.Services
 			string tmpPath = $"{LogosPath}/{TMP_PREFIX}{traderId}{EXTENSION}";
 			if (!File.Exists(tmpPath))
 			{
-				throw new AppException("Temporary file not found", 404);
+				throw new Break("Temporary file not found", BreakCode.NotFound, 404);
+			}
+			string logoPath = $"{LogosPath}/{LOGO_PREFIX}{traderId}{EXTENSION}";
+			if (File.Exists(logoPath))
+			{
+				File.Delete(logoPath);
 			}
 			File.Copy(tmpPath, $"{LogosPath}/{LOGO_PREFIX}{traderId}{EXTENSION}");
 			File.Delete(tmpPath);
@@ -95,7 +100,7 @@ namespace fidelizPlus_back.Services
 			string filePath = $"{LogosPath}/{prefix}{traderId}{EXTENSION}";
 			if (!File.Exists(filePath))
 			{
-				throw new AppException("Logo not found", 404);
+				throw new Break("Logo not found", BreakCode.NotFound, 404);
 			}
 			byte[] ret;
 			using (FileStream file = File.OpenRead(filePath))

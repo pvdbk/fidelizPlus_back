@@ -1,20 +1,20 @@
 ﻿namespace fidelizPlus_back.Services
 {
-    using AppDomain;
-    using Repositories;
+	using AppDomain;
+	using Repositories;
 
-    public class OfferService : CrudService<Offer, OfferDTO>
-    {
-        private OfferRepository OfferRepo { get; }
+	public class OfferService : CrudService<Offer, OfferDTO>
+	{
+		private OfferRepository OfferRepo { get; }
 
-        public OfferService(OfferRepository repo) : base(repo)
-        {
-            OfferRepo = repo;
-        }
+		public OfferService(OfferRepository repo) : base(repo)
+		{
+			OfferRepo = repo;
+		}
 
-        public void NullifyTrader(int traderId)
-        {
-            OfferRepo.NullifyTrader(traderId);
-        }
-    }
+		public void NullifyTrader(int traderId)
+		{
+			OfferRepo.NullifyTrader(traderId);
+		}
+	}
 }

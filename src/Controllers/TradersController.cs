@@ -4,15 +4,15 @@ using Microsoft.AspNetCore.Http;
 
 namespace fidelizPlus_back.Controllers
 {
-    using AppDomain;
-    using Services;
+	using AppDomain;
+	using Services;
 
-    [Route("[controller]")]
-    [ApiController]
-    public class TradersController : UserController<Trader, PrivateTrader, PublicTrader, TraderAccount, TraderAccountDTO>
-    {
-        private TraderService TraderService { get; }
-        private MultiService MultiService { get; }
+	[Route("[controller]")]
+	[ApiController]
+	public class TradersController : UserController<Trader, PrivateTrader, PublicTrader, TraderAccount, TraderAccountDTO>
+	{
+		private TraderService TraderService { get; }
+		private MultiService MultiService { get; }
 		private LogoService LogoService { get; }
 
 		public TradersController(
@@ -20,33 +20,33 @@ namespace fidelizPlus_back.Controllers
 			MultiService multiService,
 			LogoService logoService
 		) : base(traderService)
-        {
-            TraderService = traderService;
-            MultiService = multiService;
+		{
+			TraderService = traderService;
+			MultiService = multiService;
 			LogoService = logoService;
-        }
+		}
 
-        [HttpGet]
-        [Route("{id}/clients")]
-        public IActionResult Clients(int id, string filter)
-            => Ok(MultiService.ClientsForTrader(id, filter));
+		[HttpGet]
+		[Route("{id}/clients")]
+		public IActionResult Clients(int id, string filter)
+			=> Ok(MultiService.ClientsForTrader(id, filter));
 
 
-        [HttpPost]
-        [Route("{traderId}/purchases/clients/{clientId}")]
-        public IActionResult Save(int clientId, int traderId, decimal amount)
-        {
-            (PurchaseDTO dto, int id) = MultiService.SavePurchase(clientId, traderId, amount);
-            return Created($"http://{Request.Host}{Request.Path}/{id}", dto);
-        }
+		[HttpPost]
+		[Route("{traderId}/purchases/clients/{clientId}")]
+		public IActionResult Save(int clientId, int traderId, decimal amount)
+		{
+			(PurchaseDTO dto, int id) = MultiService.SavePurchase(clientId, traderId, amount);
+			return Created($"http://{Request.Host}{Request.Path}/{id}", dto);
+		}
 
-        [HttpDelete]
-        [Route("{traderId}/purchases/{purchaseId}")]
-        public IActionResult DeletePurchase(int traderId, int purchaseId)
-        {
-            TraderService.DeletePurchase(traderId, purchaseId);
-            return NoContent();
-        }
+		[HttpDelete]
+		[Route("{traderId}/purchases/{purchaseId}")]
+		public IActionResult DeletePurchase(int traderId, int purchaseId)
+		{
+			TraderService.DeletePurchase(traderId, purchaseId);
+			return NoContent();
+		}
 
 		[HttpPost]
 		[Route("{traderId}/logo")]

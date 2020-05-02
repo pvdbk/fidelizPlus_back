@@ -2,16 +2,16 @@
 
 namespace fidelizPlus_back.AppDomain
 {
-    public partial class Client : UserEntity<ClientAccount>
-    {
-        public Client()
-        {
-            ClientOffer = new HashSet<ClientOffer>();
-            CommercialLink = new HashSet<CommercialLink>();
-        }
+	public partial class Client : UserEntity<ClientAccount>
+	{
+		public Client()
+		{
+			ClientOffer = new HashSet<ClientOffer>();
+			CommercialLink = new HashSet<CommercialLink>();
+		}
 
-        public string AdminPassword { get; set; }
+		public string AdminPassword { get; set; }
 
-        public virtual ICollection<ClientOffer> ClientOffer { get; set; }
-    }
+		public virtual ICollection<ClientOffer> ClientOffer { get; set; }
+	}
 }

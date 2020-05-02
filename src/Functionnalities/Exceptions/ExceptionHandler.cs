@@ -3,59 +3,54 @@ using System.Threading.Tasks;
 
 namespace fidelizPlus_back
 {
-    using LogDomain;
+	using LogDomain;
 
-    public class ExceptionHandler
-    {
-        private RequestDelegate Next { get; }
+	public class ExceptionHandler
+	{
+		private RequestDelegate Next { get; }
 
-        public ExceptionHandler(RequestDelegate next) => Next = next;
+		public ExceptionHandler(RequestDelegate next) => Next = next;
 
-        private async Task SendHttpResponse(HttpContext context, LogService logService, AppException e)
-        {
-            HttpResponse response = context.Response;
-            byte[] bodyContent;
-            if (e is SendPic)
-            {
-                response.ContentType = Services.LogoService.MIME_TYPE;
-                response.StatusCode = 200;
-                bodyContent = (byte[])e.Content;
-            }
-            else
-            {
-                response.ContentType = "application/json";
-                response.StatusCode = e.Status;
-                string errorJson = e.Content.ToJson();
-                if (e.Status == 500)
-                {
-                    logService.AddError(errorJson);
-                    bodyContent = "Server error".Quote().ToBytes();
-                }
-                else
-                {
-                    bodyContent = errorJson.ToBytes();
-                }
-            }
-            await context.Response.Body.WriteAsync(bodyContent);
-        }
+		private async Task SendHttpResponse(HttpContext context, int status, string contentType, byte[] content)
+		{
+			HttpResponse response = context.Response;
+			response.StatusCode = status;
+			response.ContentType = contentType;
+			await context.Response.Body.WriteAsync(content);
+		}
 
-        public async Task Invoke(HttpContext context, LogService logService)
-        {
-            try
-            {
-                await Next(context);
-            }
-            catch (AppException e)
-            {
-                if (context.WebSockets.IsWebSocketRequest)
-                {
-                    logService.AddError(e.Content.ToJson());
-                }
-                else
-                {
-                    await SendHttpResponse(context, logService, e);
-                }
-            }
-        }
-    }
+		public async Task Invoke(HttpContext context, LogService logService)
+		{
+			try
+			{
+				await Next(context);
+			}
+			catch (Break b)
+			{
+				string errorJson = new
+				{
+					content = b.Content,
+					errCode = b.Code.ToString()
+				}.ToJson();
+				if(b.Status == 500)
+				{
+					logService.AddError(errorJson);
+					await SendHttpResponse(context, 500, "text/plain", "Server error".ToBytes());
+				}
+				else if (!context.WebSockets.IsWebSocketRequest)
+				{
+					await SendHttpResponse(context, b.Status, "application/json", errorJson.ToBytes());
+				}
+			}
+			catch (SendPic s)
+			{
+				await SendHttpResponse(
+					context,
+					200,
+					Services.LogoService.MIME_TYPE,
+					s.PicBytes
+				);
+			}
+		}
+	}
 }
