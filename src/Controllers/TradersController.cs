@@ -28,13 +28,13 @@ namespace fidelizPlus_back.Controllers
 
 		[HttpGet]
 		[Route("{id}/clients")]
-		public IActionResult Clients(int id, string filter)
+		public IActionResult GetClients(int id, string filter)
 			=> Ok(MultiService.ClientsForTrader(id, filter));
 
 
 		[HttpPost]
 		[Route("{traderId}/purchases/clients/{clientId}")]
-		public IActionResult Save(int clientId, int traderId, decimal amount)
+		public IActionResult SavePurchase(int clientId, int traderId, decimal amount)
 		{
 			(PurchaseDTO dto, int id) = MultiService.SavePurchase(clientId, traderId, amount);
 			return Created($"http://{Request.Host}{Request.Path}/{id}", dto);
@@ -50,7 +50,7 @@ namespace fidelizPlus_back.Controllers
 
 		[HttpPost]
 		[Route("{traderId}/logo")]
-		public async Task<IActionResult> Save(int traderId, IFormFile formFile)
+		public async Task<IActionResult> SaveTmpLogo(int traderId, IFormFile formFile)
 		{
 			await LogoService.Save(traderId, formFile);
 			return NoContent();
@@ -58,7 +58,7 @@ namespace fidelizPlus_back.Controllers
 
 		[HttpGet]
 		[Route("{traderId}/logo")]
-		public IActionResult Get(int traderId, bool confirm = false)
+		public IActionResult GetLogo(int traderId, bool confirm = false)
 		{
 			if (!confirm)
 			{
@@ -70,6 +70,6 @@ namespace fidelizPlus_back.Controllers
 
 		[HttpGet]
 		[Route("{traderId}/logo/tmp")]
-		public void GetTmp(int traderId) => LogoService.Get(traderId, LogoService.TMP_PREFIX);
+		public void GetTmpLogo(int traderId) => LogoService.Get(traderId, LogoService.TMP_PREFIX);
 	}
 }

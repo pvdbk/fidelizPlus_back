@@ -20,7 +20,7 @@ namespace fidelizPlus_back.Services
 		public CrudService<User, TPrivate> UserService { get; }
 		public CrudService<TAccount, TAccountDTO> AccountService { get; }
 		public CommercialLinkService ClService { get; }
-		public RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
+		public PurchaseService PurchaseService { get; }
 		public Action<TEntity> SeekReferences { get; }
 		public Credentials Credentials { get; }
 
@@ -29,7 +29,7 @@ namespace fidelizPlus_back.Services
 			CrudService<User, TPrivate> userService,
 			AccountService<TAccount, TAccountDTO> accountService,
 			CommercialLinkService clService,
-			RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
+			PurchaseService purchaseService,
 			Credentials credentials
 		) : base(repo)
 		{

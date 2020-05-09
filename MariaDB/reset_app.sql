@@ -144,6 +144,7 @@ CREATE TABLE `app`.`client_offer` (
 CREATE TABLE `app`.`purchase` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `commercial_link_id` INT NOT NULL,
+  `creation_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `paying_time` DATETIME NULL DEFAULT NULL,
   `amount` DECIMAL(10,2) NOT NULL,
   PRIMARY KEY (`id`),

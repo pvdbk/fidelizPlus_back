@@ -227,6 +227,11 @@ namespace fidelizPlus_back.AppDomain
 
 				entity.Property(e => e.CommercialLinkId).HasColumnName("commercial_link_id");
 
+				entity.Property(e => e.CreationTime)
+					.HasColumnName("creation_time")
+					.HasColumnType("datetime")
+					.HasDefaultValueSql("CURRENT_TIMESTAMP");
+
 				entity.Property(e => e.PayingTime)
 					.HasColumnName("paying_time")
 					.HasColumnType("datetime");

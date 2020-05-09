@@ -11,65 +11,18 @@ namespace fidelizPlus_back.Payment
 	public class PaymentHandler
 	{
 		private RequestDelegate Next { get; }
-		private PaymentMonitor Monitor { get; }
+		private Monitor Monitor { get; }
 
 		public PaymentHandler(
 			RequestDelegate next,
-			PaymentMonitor monitor
+			Monitor monitor
 		)
 		{
 			Next = next;
 			Monitor = monitor;
 		}
 
-		private bool WaitPayment(int purchaseId)
-		{
-			bool done = false;
-			try
-			{
-				Thread.Sleep(20000);
-			}
-			catch (ThreadInterruptedException)
-			{
-				done = !Monitor.IsMonitored(purchaseId);
-			}
-			return done;
-		}
-
-		private void ThreadVsTask(Thread thread, Func<Task> asyncFunc)
-		/*
-		Run the two parameters simultaneously.
-		If the thread finish first, the asynfunc run is interrupted.
-		Else the thread is interrupted.
-		*/
-		{
-			Thread threadWrapper = new Thread(toKill =>
-			{
-				try
-				{
-					thread.Start();
-					thread.Join();
-					((Thread)toKill).Interrupt();
-				}
-				catch (ThreadInterruptedException)
-				{ }
-			});
-			Func<Task> taskWrapper = async () =>
-			{
-				threadWrapper.Start(Thread.CurrentThread);
-				await asyncFunc();
-				((Thread)threadWrapper).Interrupt();
-				thread.Interrupt();
-			};
-			try
-			{
-				taskWrapper().Wait();
-			}
-			catch (ThreadInterruptedException)
-			{ }
-		}
-
-		private async Task<int> ReadPurchaseId(NiceWebSocket webSocket, RelatedToBothService<Purchase, PurchaseDTO> purchaseService)
+		private async Task<int> ReadPurchaseId(NiceWebSocket webSocket, PurchaseService purchaseService)
 		{
 			string purchaseIdStr = await webSocket.Read();
 			int purchaseId;
@@ -91,27 +44,13 @@ namespace fidelizPlus_back.Payment
 			return purchaseId;
 		}
 
-		private async Task HandleWebSocketRequest(HttpContext context, RelatedToBothService<Purchase, PurchaseDTO> purchaseService)
+		private async Task HandleWebSocketRequest(HttpContext context, PurchaseService purchaseService)
 		{
 			NiceWebSocket webSocket = new NiceWebSocket(context);
 			int purchaseId = await ReadPurchaseId(webSocket, purchaseService);
-			bool payed = false;
-			bool timeout = false;
-			Thread waitPayment = new Thread(() =>
-			{
-				payed = WaitPayment(purchaseId);
-				timeout = true;
-			});
-			Monitor.Add(purchaseId, waitPayment);
-			ThreadVsTask(waitPayment, () => webSocket.Read());
-			await webSocket.Close(
-				payed ? "Payed" :
-				timeout ? "Timeout" :
-				"Interrupted"
-			);
 		}
 
-		public async Task Invoke(HttpContext context, RelatedToBothService<Purchase, PurchaseDTO> purchaseService)
+		public async Task Invoke(HttpContext context, PurchaseService purchaseService)
 		{
 			if (context.Request.Path == "/ws")
 			{

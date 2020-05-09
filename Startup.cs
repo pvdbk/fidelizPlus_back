@@ -64,7 +64,7 @@ namespace fidelizPlus_back
                 options.Cookie.Name = "sessionId";
             });
 
-            services.AddSingleton<PaymentMonitor>();
+            services.AddSingleton<Monitor>();
 			services.AddScoped<Credentials>();
             services.AddScoped<CredentialsHandler>();
             services.AddScoped<LogService>();
@@ -75,26 +75,26 @@ namespace fidelizPlus_back
             services.AddScoped<CrudService<User, PrivateTrader>>();
 
             services.AddScoped<UserEntityRepository<Client, ClientAccount>>();
-            services.AddScoped<CrudRepository<ClientAccount>>();
+            services.AddScoped<ClientAccountRepository>();
             services.AddScoped<ClientService>();
 
             services.AddScoped<UserEntityRepository<Trader, TraderAccount>>();
-            services.AddScoped<CrudRepository<TraderAccount>>();
+            services.AddScoped<TraderAccountRepository>();
             services.AddScoped<TraderService>();
 
-            services.AddScoped<RelatedToBothRepository<Purchase>>();
+            services.AddScoped<PurchaseRepository>();
             services.AddScoped<RelatedToBothRepository<Comment>>();
             services.AddScoped<ClientOfferRepository>();
             services.AddScoped<CommercialLinkRepository>();
             services.AddScoped<OfferRepository>();
 
-            services.AddScoped<AccountService<ClientAccount, ClientAccountDTO>>();
-            services.AddScoped<AccountService<TraderAccount, TraderAccountDTO>>();
+            services.AddScoped<ClientAccountService>();
+            services.AddScoped<TraderAccountService>();
             services.AddScoped<CommercialLinkService>();
             services.AddScoped<OfferService>();
             services.AddScoped<ClientOfferService>();
             services.AddScoped<MultiService>();
-            services.AddScoped<RelatedToBothService<Purchase, PurchaseDTO>>();
+            services.AddScoped<PurchaseService>();
 
             services.AddControllers();
         }

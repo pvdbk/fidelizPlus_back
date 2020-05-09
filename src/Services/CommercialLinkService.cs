@@ -8,11 +8,11 @@ namespace fidelizPlus_back.Services
 	public class CommercialLinkService : CrudService<CommercialLink, CommercialLink>
 	{
 		private CommercialLinkRepository ClRepo { get; }
-		private RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
+		private PurchaseService PurchaseService { get; }
 
 		public CommercialLinkService(
 			CommercialLinkRepository repo,
-			 RelatedToBothService<Purchase, PurchaseDTO> purchaseService
+			PurchaseService purchaseService
 		) : base(repo)
 		{
 			ClRepo = repo;

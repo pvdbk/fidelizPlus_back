@@ -12,20 +12,20 @@ namespace fidelizPlus_back.Services
 		private ClientService ClientService { get; }
 		private TraderService TraderService { get; }
 		private CommercialLinkService ClService { get; }
-		private RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
-		private AccountService<ClientAccount, ClientAccountDTO> ClientAccountService { get; }
-		private AccountService<TraderAccount, TraderAccountDTO> TraderAccountService { get; }
-		private PaymentMonitor PaymentMonitor { get; }
+		private PurchaseService PurchaseService { get; }
+		private ClientAccountService ClientAccountService { get; }
+		private TraderAccountService TraderAccountService { get; }
+		private Monitor Monitor { get; }
 		private Credentials Credentials { get; }
 
 		public MultiService(
 			ClientService clientService,
 			TraderService traderService,
 			CommercialLinkService clService,
-			RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
-			AccountService<ClientAccount, ClientAccountDTO> clientAccountService,
-			AccountService<TraderAccount, TraderAccountDTO> traderAccountService,
-			PaymentMonitor paymentMonitor,
+			PurchaseService purchaseService,
+			ClientAccountService clientAccountService,
+			TraderAccountService traderAccountService,
+			Monitor monitor,
 			Credentials credentials
 		)
 		{
@@ -35,7 +35,7 @@ namespace fidelizPlus_back.Services
 			PurchaseService = purchaseService;
 			ClientAccountService = clientAccountService;
 			TraderAccountService = traderAccountService;
-			PaymentMonitor = paymentMonitor;
+			Monitor = monitor;
 			Credentials = credentials;
 		}
 
@@ -146,7 +146,7 @@ namespace fidelizPlus_back.Services
 				throw new Break("Not enough money", BreakCode.ErrAccount, 400);
 			}
 			TraderAccount target = TraderService.GetAccount(purchase.CommercialLink.TraderId);
-			PaymentMonitor.Remove(purchaseId);
+			Monitor.Signal($"purchase{purchaseId}");
 			source.Balance -= amount;
 			target.Balance += amount;
 			purchase.PayingTime = DateTime.Now;

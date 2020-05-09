@@ -11,9 +11,9 @@
 		public TraderService(
 			UserEntityRepository<Trader, TraderAccount> repo,
 			CrudService<User, PrivateTrader> userService,
-			AccountService<TraderAccount, TraderAccountDTO> accountService,
+			TraderAccountService accountService,
 			CommercialLinkService clService,
-			RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
+			PurchaseService purchaseService,
 			Credentials credentials,
 			OfferService offerService
 		) : base(repo, userService, accountService, clService, purchaseService, credentials)

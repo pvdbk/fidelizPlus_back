@@ -10,12 +10,12 @@ namespace fidelizPlus_back.Controllers
 	public class ClientsController : UserController<Client, PrivateClient, PublicClient, ClientAccount, ClientAccountDTO>
 	{
 		private ClientService ClientService { get; }
-		private RelatedToBothService<Purchase, PurchaseDTO> PurchaseService { get; }
+		private PurchaseService PurchaseService { get; }
 		private MultiService BothService { get; }
 
 		public ClientsController(
 			ClientService clientService,
-			RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
+			PurchaseService purchaseService,
 			MultiService bothService
 		) : base(clientService)
 		{
@@ -26,7 +26,7 @@ namespace fidelizPlus_back.Controllers
 
 		[HttpGet]
 		[Route("{id}/traders")]
-		public IActionResult Traders(int id, string filter) =>
+		public IActionResult GetTraders(int id, string filter) =>
 			Ok(BothService.TradersForClient(id, filter));
 
 		[HttpGet]

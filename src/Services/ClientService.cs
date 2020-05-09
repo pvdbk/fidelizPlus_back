@@ -11,9 +11,9 @@
 		public ClientService(
 			UserEntityRepository<Client, ClientAccount> repo,
 			CrudService<User, PrivateClient> userService,
-			AccountService<ClientAccount, ClientAccountDTO> accountService,
+			ClientAccountService accountService,
 			CommercialLinkService clService,
-			RelatedToBothService<Purchase, PurchaseDTO> purchaseService,
+			PurchaseService purchaseService,
 			Credentials credentials,
 			ClientOfferService clientOfferService
 		) : base(repo, userService, accountService, clService, purchaseService, credentials)
